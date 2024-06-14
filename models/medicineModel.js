@@ -3,7 +3,8 @@ const objectId = mongoose.Schema.Types.ObjectId;
 const medicineSchema = new mongoose.Schema({
     seller: {
         type: objectId,
-        ref: "User"
+        ref: "User",
+        required:true
     },
     category: {
         type: String,

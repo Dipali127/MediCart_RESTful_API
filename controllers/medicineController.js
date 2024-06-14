@@ -39,7 +39,7 @@ const addMedicine = async function (req, res) {
             return res.status(400).send({ status: false, message: "Medicine name is required" });
         }
         // Check is provided medicine name already exist
-        const isexistMedicine = await medicineModel.findOne({ medicineName: medicineName });
+        const isexistMedicine = await medicineModel.findOne({ seller:sellerId, medicineName: medicineName });
         if (isexistMedicine) {
             return res.status(409).send({ status: false, message: "Provided medicine name already exist" })
         }
@@ -115,11 +115,30 @@ const getMedicine = async function (req, res) {
         let filter = req.query;
         let getData;
         // No filter provided, fetch all medicines that are not deleted
-        if (Object.keys(filter.length === 0)) {
+        if (!filter) {
             getData = await medicineModel.find({ isDeleted: false });
         } else {
-        // Filter provided, fetch medicines based on filter parameters
-            getData = await medicineModel.find({ isDeleted: false }, { ...filter })
+            // Filter provided, fetch medicines based on filter parameters
+            let query = { isDeleted: false };
+            const { name, category, priceGreaterThan, priceLessThan } = filter;
+            if (name) {
+                query.medicineName = name;
+            }
+            if (category) {
+                query.category = category;
+            }
+            if (priceGreaterThan && priceLessThan) {
+                query.price = { $gt: Number(priceGreaterThan), $lt: Number(priceLessThan) }
+            }
+            if (priceGreaterThan) {
+
+                query.price = { $gt: Number(priceGreaterThan) }
+            }
+            if (priceLessThan) {
+                query.price = { $lt: Number(priceLessThan) }
+            }
+
+            getData = await medicineModel.find(query)
         }
 
         return res.status(200).send({ status: false, message: "Fetched detail successfully", data: getData });
@@ -273,4 +292,4 @@ const deleteMedicine = async function (req, res) {
 
 
 
-module.exports = { addMedicine, getMedicine, updateMedicine, deleteMedicine};
+module.exports = { addMedicine, getMedicine, updateMedicine, deleteMedicine };

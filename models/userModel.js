@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
     },
     password:{
         type:String,
-        minLen:8
+        minLength:8
     },
     mobileNumber:{
         type:String,

@@ -9,4 +9,7 @@ router.get('/getMedicine',authentication.auth,medicineController.getMedicine);
 router.patch('/update/:medicineId',authentication.auth,authentication.permission('seller'),fileUpload,medicineController.updateMedicine);
 router.patch('/delete/:medicineId',authentication.auth,authentication.permission('seller'),medicineController.deleteMedicine);
 
+//route to handle endpoint 
+router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
+
 module.exports = router;
