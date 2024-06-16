@@ -10,3 +10,6 @@ router.delete('/deleteMedicine/:buyerId',authentication.auth,authentication.perm
 //route to handle endpoint 
 router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
 module.exports = router;
+
+//  "email":"meenq111@gmail.com",
+//   "password":"meenO12&niya"

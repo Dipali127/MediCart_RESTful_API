@@ -11,6 +11,7 @@ const port = process.env.PORT || 3000;
 const userRoute = require('./routes/userRoute.js');
 const medicineRoute = require('./routes/medicineRoute.js');
 const cartRoute = require('./routes/cartRoute');
+const orderRoute = require('./routes/orderRoute')
 
 const mongoose = require('mongoose');
 // Connect to MongoDB using connection string from environment variables
@@ -21,6 +22,7 @@ mongoose.connect(process.env.CLUSTER_STRING).then(() => { console.log("Database 
 app.use('/user', userRoute);
 app.use('/medicine', medicineRoute);
 app.use('/cart',  cartRoute)
+app.use('/order', orderRoute);
 
 app.listen(port, () => {
     console.log(`Server listen on port: ${port}`)

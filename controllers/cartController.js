@@ -82,7 +82,7 @@ const viewCart = async function (req, res) {
         if (!validation.checkObjectId(buyerId)) {
             return res.status(400).send({ status: false, message: "Invalid buyerId" });
         }
-        const isexistCart = await cartModel.findOne({buyerId: buyerId }).populate('items.medicineId');
+        const isexistCart = await cartModel.findOne({ buyerId: buyerId }).populate('items.medicineId');
         if (!isexistCart) {
             return res.status(404).send({ status: false, message: "Cart not found" })
         }
@@ -91,7 +91,7 @@ const viewCart = async function (req, res) {
         if (isexistCart.buyerId != req.decodedToken.userId) {
             return res.status(403).send({ status: false, message: " Not authorized to view the cart " });
         }
-        
+
         return res.status(200).send({ status: true, message: "Successfully fetched cart data", data: isexistCart });
 
     } catch (error) {
@@ -105,7 +105,7 @@ const deleteMedicinefromCart = async function (req, res) {
         if (!validation.checkObjectId(buyerId)) {
             return res.status(400).send({ status: false, message: "Invalid buyerId" });
         }
-        const isexistCart = await cartModel.findOne({buyerId: buyerId });
+        const isexistCart = await cartModel.findOne({ buyerId: buyerId }).populate('items.medicineId')
         if (!isexistCart) {
             return res.status(404).send({ status: false, message: " Cart not found" })
         }
@@ -115,25 +115,25 @@ const deleteMedicinefromCart = async function (req, res) {
             return res.status(403).send({ status: false, message: " Not authorized to delete medicine from cart " });
         }
 
-        const {medicineId} = req.body;
-        if(!validation.checkObjectId(medicineId)){
-            return res.status(400).send({status:false,message:" Invalid MedicineId "});
+        const medicineId = req.body.medicineId;
+        if (!validation.checkObjectId(medicineId)) {
+            return res.status(400).send({ status: false, message: " Invalid MedicineId " });
         }
 
-        const isexistMedicine = await cartModel.findIndex(items => items.medicneIndex.toString() === medicineId);
-        if(isexistMedicine === -1){
-            return res.status(404).send({status:false,message:" Medicine not found in the cart "});
+        const isexistMedicine = isexistCart.items.findIndex(item => item.medicineId._id.toString() === medicineId);
+        if (isexistMedicine === -1) {
+            return res.status(404).send({ status: false, message: " Medicine not found in the cart " });
         }
+
+        // Calculate the price of the removed medicine 
+        const removedMedicine = isexistCart.items[isexistMedicine];
+        const removedPrice = removedMedicine.medicineId.price * removedMedicine.quantity;
 
         // Delete single medicine from the cart
-        await cartModel.findOneAndUpdate({buyerId:buyerId},
-            {$pull:{items:{medicineId:medicineId}}});
+        await cartModel.findOneAndUpdate({ buyerId: buyerId },
+            { $pull: { items: { medicineId: medicineId } }, $inc: { totalPrice: -removedPrice } });
 
-        const updatedCart = await cartModel.findOne({buyerID:buyerId}).populate('items.medicineId');
-        updatedCart.totalPrice = updatedCart.items.reduce((acc,item) => acc+(item.medicineId.price * item.quantity))
-        await updatedCart.save();
-        return res.status(200).send({status:true,message:"  Single medicine removed from cart"})        
-
+        return res.status(200).send({ status: true, message: " Single medicine removed from cart" })
     } catch (error) {
         return res.status(500).send({ status: false, message: error.message });
     }
