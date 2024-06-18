@@ -10,8 +10,8 @@ const port = process.env.PORT || 3000;
 // Import routes
 const userRoute = require('./routes/userRoute.js');
 const medicineRoute = require('./routes/medicineRoute.js');
-const cartRoute = require('./routes/cartRoute');
-const orderRoute = require('./routes/orderRoute')
+const cartRoute = require('./routes/cartRoute.js');
+const orderRoute = require('./routes/orderRoute.js')
 
 const mongoose = require('mongoose');
 // Connect to MongoDB using connection string from environment variables
@@ -21,7 +21,7 @@ mongoose.connect(process.env.CLUSTER_STRING).then(() => { console.log("Database 
 // Handle all routes
 app.use('/user', userRoute);
 app.use('/medicine', medicineRoute);
-app.use('/cart',  cartRoute)
+app.use('/cart',  cartRoute);
 app.use('/order', orderRoute);
 
 app.listen(port, () => {
