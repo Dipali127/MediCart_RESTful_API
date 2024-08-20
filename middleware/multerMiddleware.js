@@ -20,7 +20,7 @@ const storage = multer.diskStorage({
 })
 
 
-//Configure Multer to accept only PDF files
+// Configure Multer to accept only PDF files
 const upload = multer({
     storage: storage,
     fileFilter: function (req, file, cb) {
@@ -33,5 +33,5 @@ const upload = multer({
     }
 });
 
-//Export the Multer instance
+// Export the Multer instance
 module.exports = upload.single("medicineImage")
