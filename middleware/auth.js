@@ -1,4 +1,4 @@
-//authentication:
+// authentication:
 const jwt = require('jsonwebtoken');
 require('dotenv').config({ path: '../.env' });
 
@@ -9,9 +9,8 @@ const auth = async function(req, res, next) {
         if (!token) {
             return res.status(400).send({ status: false, message: "Token is required" });
         }
-
-         // The token might contain the word "Bearer" as a prefix, which needs to be removed.
-        //Split the token to remove the "Bearer" prefix
+        
+        // Split the token to remove the "Bearer" prefix
         const finalToken = token.split(' ');
         const newToken = finalToken[1];
 
@@ -34,12 +33,9 @@ const auth = async function(req, res, next) {
     }
 }
 
-
-
-
-//like in permission wrap up function instead of directly used the middleware we will use a wrap up function so that 
-//we can use some another argument like role bcoz when we use direct middleware like above then we cant use some
-//another parameter bcoz in middleware there are only three parameters i.e req,res and next.
+// Permission middleware:
+// A wrapper function that takes a role as an argument and returns a middleware function
+// This allows us to check if the authenticated user has the required role
 const permission = function(role) {
     return (req, res, next) => {
         if (req.decodedToken.role !== role) {

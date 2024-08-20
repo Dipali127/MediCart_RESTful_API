@@ -13,3 +13,9 @@ router.patch('/delete/:medicineId',authentication.auth,authentication.permission
 router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
 
 module.exports = router;
+
+// "email": "reena32@gmail.com",
+//     "password": "reen@A11a"
+
+//   "email": "manish22@gmail.com",
+//     "password": "man@S11a"

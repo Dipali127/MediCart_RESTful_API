@@ -7,14 +7,11 @@ const bcrypt = require('bcrypt')
 const signUp = async function (req, res) {
     try {
         const data = req.body;
-        // Check if request body is empty 
         if (!validation.isEmpty(data)) {
             return res.status(400).send({ status: false, message: "Provide details for registration" });
         }
 
         const { firstName, lastName, email, password, mobileNumber, role } = data;
-
-        // Validate mandatory details
         if (!validation.checkData(firstName)) {
             return res.status(400).send({ status: false, message: "firstName is required" })
         }
@@ -33,8 +30,6 @@ const signUp = async function (req, res) {
         if (!validation.checkEmail(email)) {
             return res.status(400).send({ status: false, message: "Invalid email" })
         }
-
-        // Check if the provided email already exist in database
         const existingEmail = await userModel.findOne({ email: email });
         if (existingEmail) {
             return res.status(409).send({ status: false, message: "The provided email already exists" })
@@ -54,27 +49,25 @@ const signUp = async function (req, res) {
             return res.status(400).send({ status: false, message: "MobileNumber is required" });
         }
         if (!validation.checkMobile(mobileNumber)) {
-            return res.status(400).send({ status: false, message: "Invalid mobileNumber" });
+            return res.status(400).send({ status: false, message: "Invalid mobile number format" });
         }
-
-        // Check if the provided mobile number already exists in the database
         const uniqueMobile = await userModel.findOne({ mobileNumber: mobileNumber });
         if (uniqueMobile) {
             return res.status(409).send({ status: false, message: "Provided mobile number already exist" });
         }
 
-        // Prepare the new user or admin details with the encrypted password
+        // Prepare the new user (buyer or seller) details with the encrypted password
         const newDetails = {
             firstName: firstName,
             lastName: lastName,
             email: email,
             password: encryptPassword,
             mobileNumber: mobileNumber,
-            role: role === role ? role : user
+            role: role ? role : 'buyer'
         }
 
         const createUser = await userModel.create(newDetails);
-        return res.status(201).send({ status: true, message: "User created successfully", data: createUser })
+        return res.status(201).send({ status: true, message: "User registered successfully", data: createUser })
 
     } catch (error) {
         return res.status(500).send({ status: false, message: error.message });
@@ -84,7 +77,6 @@ const signUp = async function (req, res) {
 const signIn = async function (req, res) {
     try {
         const data = req.body;
-        // Check if request body is empty 
         if (!validation.isEmpty(data)) {
             return res.status(400).send({ status: false, message: "Provide email and password for login" });
         }
@@ -97,7 +89,6 @@ const signIn = async function (req, res) {
             return res.status(400).send({ status: false, message: "Invalid email" });
         }
 
-        // Check if the provided email doesn't present in database
         const isemailExist = await userModel.findOne({ email: email });
         if (!isemailExist) {
             return res.status(404).send({ status: false, message: "Email not found" });
@@ -109,7 +100,7 @@ const signIn = async function (req, res) {
             return res.status(400).send({ status: false, message: "Invalid password" });
         }
 
-        // Compare hashedPassword with the user or admin  provided password
+        // Compare hashedPassword with the buyer or seller provided password
         const comparePassword = await bcrypt.compare(password, isemailExist.password);
         if (!comparePassword) {
             return res.status(404).send({ status: false, message: "Incorrect password" })
@@ -130,17 +121,15 @@ const signIn = async function (req, res) {
     }
 }
 
-// address of user:
+// address of user(buyer):
 const addressofUser = async function (req, res) {
     try {
         const address = req.body;
-        // Check if request body is empty 
         if (!validation.isEmpty(address)) {
             return res.status(400).send({ status: false, message: "Provide details of address" });
         }
 
         const { state, city, pincode, street } = address;
-        // Validate pressence of each field
         if (!validation.checkData(state)) {
             return res.status(400).send({ status: false, message: "State is required" })
         }
@@ -150,7 +139,6 @@ const addressofUser = async function (req, res) {
         if (!validation.checkData(pincode)) {
             return res.status(400).send({ status: false, message: "Pincode is required" })
         }
-        // Validate pincode format
         if (!validation.isValidPincode(pincode)) {
             return res.status(400).send({ status: false, message: "Invalid pincode" })
         }
@@ -160,7 +148,7 @@ const addressofUser = async function (req, res) {
         // Retrieve userId from decoded token
         const userId = req.decodedToken.userId;
 
-        // Update user's address in the database
+        // Update buyer's address in the database
         const addAddress = await userModel.findOneAndUpdate({ _id: userId },
              { $set: { address: address } },
               { new: true })

@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const app = express();
 // Middleware to handle json data
@@ -12,17 +13,22 @@ const userRoute = require('./routes/userRoute.js');
 const medicineRoute = require('./routes/medicineRoute.js');
 const cartRoute = require('./routes/cartRoute.js');
 const orderRoute = require('./routes/orderRoute.js')
-
+const paymentRoute = require('./routes/paymentRoute.js')
 const mongoose = require('mongoose');
+
 // Connect to MongoDB using connection string from environment variables
 mongoose.connect(process.env.CLUSTER_STRING).then(() => { console.log("Database connected successfully") })
     .catch((error) => { console.log(error.message) });
+
+// Serve static files (HTML, CSS, JS)
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Handle all routes
 app.use('/user', userRoute);
 app.use('/medicine', medicineRoute);
 app.use('/cart',  cartRoute);
 app.use('/order', orderRoute);
+app.use('/capture', paymentRoute);
 
 app.listen(port, () => {
     console.log(`Server listen on port: ${port}`)

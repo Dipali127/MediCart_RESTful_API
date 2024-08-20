@@ -1,11 +1,23 @@
 const mongoose = require('mongoose');
 const objectId = mongoose.Schema.Types.ObjectId;
 const orderSchema = new mongoose.Schema({
-    cartId: {
+    buyerId: {
         type: objectId,
-        ref:'cart',
+        ref: 'User',
         required: true
-    },
+    }, 
+    items: [{
+        medicineId: {
+            type: objectId,
+            ref: 'Medicine',
+            required: true
+        },
+        quantity: {
+            type: Number,
+            default: 1
+        }
+    }
+    ],
     orderStatus: {
         type: String,
         enum: ['pending', 'completed', 'cancelled'],
@@ -13,11 +25,18 @@ const orderSchema = new mongoose.Schema({
     },//totalItems is nothing but the total number of different medicines in the cart nothing but items.length
     totalItems: {
         type: Number,
-        required:true
+        required: true
     },
-    cancellable:{
-        type:Boolean,
-        default:true
+    totalPrice: {
+        type: Number,
+        default: 0
+    },
+    cancellable: {
+        type: Boolean,
+        default: true
+    },
+    razorpayOrderId: {
+        type: String
     }
 }, { timestamps: true });
 

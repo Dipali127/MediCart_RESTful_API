@@ -1,5 +1,5 @@
-//cloudinary code:
-require('dotenv').config({path: '../.env'})
+// cloudinary code:
+// require('dotenv').config({path: '../.env'})
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
@@ -19,14 +19,14 @@ const uploadFileOnCloudinary = async function(localFilePath){
         const response = await cloudinary.uploader.upload(localFilePath, {
             resource_type : "auto"  
         })
-        //File has been uploaded successfully
+        // File has been uploaded successfully
         console.log(`file uploaded successfully ${response.url}`)
        
         return response;
 
     }catch(error){
         console.error(`Upload failed: ${error.message}`);
-        //Reomve locally saved temporary file as the uploaded operation got failed
+        // Reomve locally saved temporary file as the uploaded operation got failed
         fs.unlinkSync(localFilePath);
         return null;
     }

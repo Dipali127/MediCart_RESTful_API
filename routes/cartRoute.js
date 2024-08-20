@@ -5,6 +5,7 @@ const cartController = require('../controllers/cartController');
 
 router.post('/addCart/:buyerId', authentication.auth, authentication.permission('buyer'),cartController.addMedicineTocart);
 router.get('/viewCart/:buyerId',authentication.auth,authentication.permission('buyer'),cartController.viewCart);
+router.patch('/updateCartQuantity/:buyerId',authentication.auth,authentication.permission('buyer'),cartController.updateCartQuantity)
 router.delete('/deleteMedicine/:buyerId',authentication.auth,authentication.permission('buyer'),cartController.deleteMedicinefromCart);
 
 //route to handle endpoint 

@@ -1,15 +1,13 @@
 const mongoose = require('mongoose');
-const objectId = mongoose.Schema.Types.ObjectId;
 
 const paymentSchema = new mongoose.Schema({
-    orderId:{
-        type:objectId,
-        ref:'Order',
+    razorpayOrderId:{
+        type:String,
         required:true
     },
-    paymentMethod:{
+    paymentId:{
         type:String,
-        enum:['credit_card', 'debit_card', 'paypal', 'bank_transfer']
+        required:true
     },
     amountPaid:{
         type:Number,

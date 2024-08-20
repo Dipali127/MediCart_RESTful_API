@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Integration</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+    <h1>Ecommerce Medicine Store</h1>
+    <h2>Payment Integration Using Razorpay</h2>
+    <form id="payment-form">
+        <label for="cart-id">Enter cartId</label>
+        <input type="text" id="cart-id" name="cartId" placeholder="Enter cartId" required>
+        <button type="submit" id="pay-button">Proceed to Pay</button>
+    </form>
+
+    <script>
+        document.getElementById('pay-button').onclick = function (e) {
+            e.preventDefault(); // Prevent form submission
+
+            const cartId = document.getElementById('cart-id').value;
+
+            if (!cartId) {
+                alert('Please enter cart ID');
+                return;
+            }
+
+            fetch('/order/placeOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ cartId })
+            }).then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                const options = {
+                    key: "rzp_test_Rhbujhj452qzFS", 
+                    amount: data.amount * 100, // Amount in paise
+                    currency: "INR", 
+                    order_id: data.razorpayOrderId, 
+                    name: "Ecommerce Medicine Store",
+                    description: "Purchase of medicines",
+                    handler: function (response) {
+                        fetch('/capture/payment', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                razorpayOrderId: response.razorpay_order_id,
+                                paymentId: response.razorpay_payment_id,
+                                razorpaySignature: response.razorpay_signature
+                            })
+                        }).then(response => response.json())
+                          .then(data => alert(data.message))
+                          .catch(error => console.error('Capture payment error:', error));
+                    },
+                    prefill: {
+                        name: 'Gaurav Kumar',
+                        email: 'gaurav.kumar@example.com',
+                        contact: '9999999999'
+                    },
+                    theme: {
+                        color: "#F37254"
+                    }
+                };
+
+                const rzp1 = new Razorpay(options);
+                rzp1.open();
+            }).catch(error => console.error('Fetch error:', error));
+        }
+    </script>
+</body>
+</html>
