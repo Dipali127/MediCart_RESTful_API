@@ -8,13 +8,13 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-//Created multer instance with disk storage to upload files
+// Created multer instance with disk storage to upload files
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        return cb(null, uploadsDir) //null is custom error added by developer
+        return cb(null, uploadsDir) // null is custom error added by developer
     },
     filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`); //Use a timestamp to avoid name conflicts
+        cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name conflicts
     }
 
 })
