@@ -2,5 +2,6 @@ const express = require('express');
 const router = express.Router();
 const paymentController = require('../controllers/paymentController');
 
-router.post('/payment',  paymentController.payMent);
+router.post('/capture',  paymentController.payMent);
+router.post('/webhook', paymentController.handleWebhook);
 module.exports = router;

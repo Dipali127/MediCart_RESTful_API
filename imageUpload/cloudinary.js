@@ -1,5 +1,4 @@
 // cloudinary code:
-// require('dotenv').config({path: '../.env'})
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 

@@ -11,10 +11,12 @@ if (!fs.existsSync(uploadsDir)) {
 // Created multer instance with disk storage to upload files
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        return cb(null, uploadsDir) // null is custom error added by developer
+        // null is custom error added by developer
+        return cb(null, uploadsDir) 
     },
     filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name conflicts
+        // Use a timestamp to avoid name conflicts
+        cb(null, `${Date.now()}-${file.originalname}`); 
     }
 
 })
@@ -26,9 +28,11 @@ const upload = multer({
     fileFilter: function (req, file, cb) {
         const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         if (allowedMimeTypes.includes(file.mimetype)) {
-            cb(null, true); // Accept the file
+            // Accept the file
+            cb(null, true); 
         } else {
-            cb(new Error('Invalid file type'), false); // Reject the file
+            // Reject the file
+            cb(new Error('Invalid file type'), false); 
         }
     }
 });

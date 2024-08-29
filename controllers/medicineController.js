@@ -116,7 +116,7 @@ const addMedicine = async function (req, res) {
   }
 };
 
-// Get Medicine:
+// Get Medicine(User and Buyer):
 const getMedicine = async function (req, res) {
   try {
     let role = req.decodedToken.role;
@@ -128,21 +128,15 @@ const getMedicine = async function (req, res) {
       query.seller = sellerId;
     }
     // Filter provided, fetch medicines based on filter parameters
-    const { medicineName, category, sortByPrice } = filter;
+    const { medicineName, category} = filter;
     if (medicineName) {
       query.medicineName = medicineName;
     }
     if (category) {
       query.category = category;
     }
-    let sortBy = {};
-    if (sortByPrice === "low-to-high") {
-      sortBy.price = 1;
-    } else if (sortByPrice === "high-to-low") {
-      sortBy.price = -1;
-    }
 
-    getData = await medicineModel.find(query).sort(sortBy);
+    getData = await medicineModel.find(query);
     return res.status(200).send({ status: true, message: "Fetched detail successfully", data: getData})
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
@@ -162,9 +156,10 @@ const updateMedicine = async function (req, res) {
       return res.status(400).send({ status: false, message: "Medicine not found" })
     }
 
+    
     const sellerId = isexistMedicine.seller;
     // Check authorization: Only the seller who listed the medicine can update it
-    if (req.decodedToken.userId !== sellerId) {
+    if (req.decodedToken.userId !== sellerId.toString()) {
       return res.status(403).send({ status: false, message: "Unauthorized to update" })}
 
     // Only not deleted medicine can be updated

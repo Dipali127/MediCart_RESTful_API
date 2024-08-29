@@ -28,7 +28,7 @@ app.use('/user', userRoute);
 app.use('/medicine', medicineRoute);
 app.use('/cart',  cartRoute);
 app.use('/order', orderRoute);
-app.use('/capture', paymentRoute);
+app.use('/payment', paymentRoute);
 
 app.listen(port, () => {
     console.log(`Server listen on port: ${port}`)
