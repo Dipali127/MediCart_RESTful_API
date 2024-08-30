@@ -836,7 +836,6 @@ This will allows users(buyer) to place an order by creating it on the server(nod
 
 Create a small user interface(frontend)to show Payment Integration
 
-**Request**
 ![Screenshot (17)](https://github.com/user-attachments/assets/c9a30301-e899-46f9-82a9-8c2a335d6a86)
 ![Screenshot (18)](https://github.com/user-attachments/assets/fea34dfd-5f1d-4ac7-825c-00b28bccbf3d)
 ![Screenshot (19)](https://github.com/user-attachments/assets/2705a8ac-fb7c-4cea-9b29-da2d42ddb87b)
