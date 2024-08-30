@@ -14,10 +14,3 @@ router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint
 
 module.exports = router;
 
-// seller email and password:-
-// "email": "reena32@gmail.com",
-//     "password": "reen@A11a"
-
-// buyer email and password:-
-//   "email": "manish22@gmail.com",
-//     "password": "man@S11a"
