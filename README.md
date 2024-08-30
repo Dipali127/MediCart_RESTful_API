@@ -1,7 +1,7 @@
 
 # MediCart_RESTful_API
 
-MediCart_RESTful_API is an ecommerce medicine store backend API designed with a role-based access model. It allows buyers to manage their cart, place orders, and make payments via Razorpay, while sellers can add medicines to the store. The API ensures that each role can only perform actions appropriate to them.
+MediCart_RESTful_API is an eCommerce medicine store backend API designed with a role-based access model. It allows buyers to manage their cart, place orders, and make payments via Razorpay, while sellers can add medicines to the store. The API ensures that each role can only perform actions appropriate to them.
 
 ## Roles and Permissions
 ### Buyer
@@ -15,7 +15,7 @@ MediCart_RESTful_API is an ecommerce medicine store backend API designed with a 
 ### Seller
 * #### Can:
     * Register and log in.
-    * Add new medicines to the ecommerce medicine store.
+    * Add new medicines to the eCommerce medicine store.
     * View, update, and delete their added medicines.
 
 
@@ -64,7 +64,7 @@ To run the `medicart` application, follow these steps:
         - `razorpay_credentials` : Set the RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET variables with your individual razorpay credentials for payment integration.
         - `RAZORPAY_WEBHOOK_SECRET` : Secret for verifying Razorpay webhooks.
 
-    6. Start the application (run it on development mode):
+ 6. Start the application (run it on development mode):
 
     ```bash
     npm run dev
@@ -94,8 +94,8 @@ To run the `medicart` application, follow these steps:
 | `POST /user/signIn`       | Log in an existing user (buyer or seller)                           |
 | `POST /user/address`    | Add a buyer's address       |
 
-#### Notes:
-Ensure that the POST /user/address route is intended specifically for buyers, as sellers typically wouldn’t need to add an address.
+#### Note:
+Ensure that the POST /user/address route is intended specifically for buyers.
 
 ### Medicine Routes
 
@@ -110,8 +110,8 @@ Ensure that the POST /user/address route is intended specifically for buyers, as
 
 | Routes                      | Description                                |
 | --------------------------- | ------------------------------------------ |
-| `POST /cart/addCart/:buyerId`      | Allows a buyer to add a medicine to their personal cart. cart                      |
-| `GET /cart/viewCart/:buyerId`       | Allows a buyer to view their personal cart.                          |
+| `POST /cart/addCart/:buyerId`      | Allows a buyer to add a medicine to their cart.                      |
+| `GET /cart/viewCart/:buyerId`       | Allows a buyer to view their cart.                          |
 | `PATCH /cart/updateCartQuantity/:buyerId`       | Allows a buyer to update the quantity of a medicine in their cart.                     |
 | `Delete /cart/deleteMedicine/:buyerId`       | Allows a buyer to remove a medicine from their cart.               |
 
@@ -130,9 +130,10 @@ Ensure that the POST /user/address route is intended specifically for buyers, as
 | `POST /payment/webhook`      |  Handle Razorpay payment webhooks to verify and process payments.                |
 
 #### Clarifications:
-* **POST /payment/capture:** This route is used to capture or confirm the payment for an order. After the buyer completes the payment process, the client sends a request to this endpoint to verify the payment details and update the order status accordingly.
+* **POST /payment/capture:** This route is used to capture or confirm the payment for an order. After the buyer completes the payment process, the client sends a request to this endpoint to verify the payment details and update the order status and payment status accordingly.
 
 * **POST/payment/webhook:** This route is used to handle Razorpay payment webhooks. Razorpay sends a notification to this endpoint after a payment event occurs, which application backend server can use to verify and process the payment details.
+
 **Note:**  Use ngrok to make your local `localhost:port` accessible to the public internet, as webhooks from Razorpay cannot directly access a local development server.
 
 ##  User (buyer and seller) Routes
@@ -370,7 +371,7 @@ Content-Type: application/json
 
 Send a GET request with filter query to Fetch a medicine.
 
-Below, seller make a GET request to fetch medicine details based on medicineName as filter query.
+Below here, seller make a GET request to fetch medicine details based on medicineName as filter query.
 
 ````
 Method: GET
@@ -491,7 +492,7 @@ Content-Type: application/json
 
 Send a GET request with filter query to Fetch a medicine details.
 
-Below, buyer make a GET request to fetch medicine details based on category as a filter query.
+Below here, buyer make a GET request to fetch medicine details based on category as a filter query.
 ````
 Method: GET
 URL: /medicine/getMedicine
@@ -566,9 +567,9 @@ Produces: application/json
     ]
 }
 ```
-**3) Update medicine details**
+**3) Update medicine**
 
-Send a PATCH request to update an existing medicine detail.
+Send a PATCH request to update an existing medicine.
 
 ````
 Method: PATCH
@@ -607,7 +608,7 @@ Content-Type: application/json
 ````
 **4) Delete medicine**
 
-Send a PATCH request to an delete an exisiting medicine by marking it as deleted (isDeleted: true).
+Send a PATCH request to mark a medicine as deleted.
 
 ````
 Method: PATCH
@@ -715,7 +716,7 @@ Content-Type: application/json
 ```
 **3) Update cart quantity**
 
-Send a PATCH request to decrement the quantity of a medicine in the car.
+Send a PATCH request to decrement the quantity of a medicine in the cart.
 
 ````
 Method: PATCH 
@@ -768,6 +769,68 @@ Content-Type: application/json
     "message": "Single medicine removed from cart"
 }
 ```
+## Order Routes
+**1) Place an order**
+
+Send a POST request to place an order based on the items in their cart.
+The server responds to frontend with the necessary details for payment processing via Razorpay.
+
+````
+Method: POST 
+URL: order/placeOrder
+Permission: buyer
+Content-Type: application/json
+````
+**EXAMPLE**
+* **Request:** POST order/placeOrder
+* **Response:**
+```json
+{
+    "razorpayOrderId": "order_Or1XKbA3wN8XAp",
+    "amount": 4000,
+    "buyerId": "66bef613e805408836ca8286"
+}
+```
+* **Note:**  Razorpay processes the order amount in paise (1 INR = 100 paise). Therefore, the amount must be provided in paise when creating the order.
+**2) Cancel an order**
+
+Send a POST request to cancel an order they have placed.
+
+````
+Method: POST 
+URL: order/cancelOrder/66bef613e805408836ca8286
+Permission: buyer
+Authorization: Bearer {token}
+Content-Type: application/json
+````
+**EXAMPLE**
+* **Request:** POST order/cancelOrder/
+* **Response:**
+```json
+{
+    "status": true,
+    "message": "Order Cancelled",
+    "data": {
+        "_id": "66d170bb0aed527ac8b9f738",
+        "buyerId": "66bef613e805408836ca8286",
+        "items": [
+            {
+                "medicineId": "66d023fc08a23ed5f41d32d6",
+                "quantity": 1,
+                "_id": "66d170b30aed527ac8b9f733"
+            }
+        ],
+        "orderStatus": "cancelled",
+        "totalItems": 1,
+        "totalPrice": 40,
+        "cancellable": false,
+        "createdAt": "2024-08-30T07:11:55.414Z",
+        "updatedAt": "2024-08-30T07:18:58.047Z",
+        "__v": 0,
+        "razorpayOrderId": "order_Or1XKbA3wN8XAp"
+    }
+}
+```
 ## Payment Integration Using Razorpay 
 This will allows users(buyer) to place an order by creating it on the server(nodejs) and integrating with Razorpay for payment processing.
 
@@ -783,20 +846,19 @@ Create a small user interface(frontend)to show Payment Integration
 ### Workflow:
 
 1. **Client Side:**
-* The user(buyer) selects the items they want to purchase, which are added to their cart.
+* The user(buyer) selects the medicine they want to purchase, which are added to their cart and clicks on `proceed to pay` button.
 * The frontend then sends a POST request to the `order/placeOrder` endpoint, including the cartId in the request body.
-* The backend responds with a `razorpayOrderId`, amount, and other necessary details.
+* The backend responds with the `razorpayOrderId`, amount, and buyerId to the frontend.
 * The frontend uses the received `razorpayOrderId` to render the Razorpay payment form for the user to complete the payment.
 
 2. **Backend Side:**
 * The backend receives the request with the cartId.
-* It verifies the cart contents and calculates the total price.
-* Razorpay integration is triggered to create an  `razorpayOrderId` for the payment.
-* The backend responds with the `razorpayOrderId`, amount, and buyerId to the frontend.
+* It verifies the cart contents and calculates the total amount which the user(buyer) have to pay.
+* Backend call the razorpay server to create an `razorpayOrderId` for payment integration.
+* Razorpay responds with `razorpay_credentials` to backend. 
 
 3. **Payment Process:**
-* The frontend uses the `razorpayOrderId` to initialize the Razorpay payment form.
-* After the user (buyer) completes the payment, Razorpay sends the payment details to a configured webhook endpoint on the backend.
+* After the user(buyer) completes the payment, Razorpay sends the payment details to configured webhook endpoint on the backend.
 * The backend then verifies the payment details and updates the orderStatus and paymentStatus based on the payment success or failure.
 
 
