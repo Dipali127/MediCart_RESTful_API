@@ -1,4 +1,4 @@
-//Load environment variables from .env file
+//Load an environment variables from .env file
 require('dotenv').config({ path: '../.env' });
 const port = process.env.PORT || 3000;
 
