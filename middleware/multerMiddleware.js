@@ -9,7 +9,7 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 
-//Configure Multer disk storage for uploading images
+//Configure Multer disk storage for uploading an images
 const storage = multer.diskStorage({
      destination: function (req, file, cb) {
         return cb(null, uploadDir) //null is custom error added by developer
