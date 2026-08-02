@@ -2,15 +2,16 @@ const cartModel = require("../models/cartModel");
 const medicineModel = require("../models/medicineModel");
 const validation = require("../validator/validation");
 
-// Add TO Cart:
+//Add TO Cart:
 const addMedicineTocart = async function (req, res) {
   try {
     const buyerId = req.params.buyerId;
     if (!validation.checkObjectId(buyerId)) {
       return res.status(400).send({ status: false, message: "Invalid buyerId" })
     }
-    if (buyerId !== req.decodedToken.userId) {
-      return res.status(403).send({status: false, message: "Not authorized to add medicine in cart" })
+
+    if (buyerId.toString() !== req.decodedToken.userId) {
+      return res.status(403).send({ status: false, message: "Not authorized to add medicine in cart" })
     }
 
     const data = req.body;
@@ -18,47 +19,62 @@ const addMedicineTocart = async function (req, res) {
     if (!validation.checkData(medicineId)) {
       return res.status(400).send({ status: false, message: "Provide medicineId" })
     }
+
     if (!validation.checkObjectId(medicineId)) {
       return res.status(400).send({ status: false, message: "Invalid medicineId" })
     }
-    // Check if the medicine exists and is not deleted
+
+    //Check if the medicine exists and is not deleted
     const isexistMedicine = await medicineModel.findById({ _id: medicineId });
+
     if (!isexistMedicine) {
       return res.status(404).send({ status: false, message: "Medicine not found" })
     }
+
     if (isexistMedicine.isDeleted === true) {
       return res.status(404).send({ status: false, message: "Medicine is deleted" })
     }
+
     if (isexistMedicine.stockQuantity === 0) {
       return res.status(400).send({ status: false, message: "Medicine is out of stock" })
     }
 
-    // If buyer's cart doesn't exist then create new cart and add medicine to that cart
+    if (quantity === undefined) {
+      return res.status(400).send({ status: false, message: "Provide quantity" });
+    }
+
+    if (quantity !== 1) {
+      return res.status(400).send({ status: false, message: "Quantity must be exactly 1" });
+    }
+
+    //If buyer's cart doesn't exist then create new cart and add medicine to that cart
     const userCart = await cartModel.findOne({ buyerId: buyerId });
 
     if (!userCart) {
-      let newCart = {buyerId: buyerId,
-        items: [{ medicineId: medicineId, quantity: 1 }],
+      let newCart = {
+        buyerId: buyerId,
+        items: [{ medicineId: medicineId, quantity: quantity }],
         totalPrice: isexistMedicine.price,
       };
 
       const createCart = await cartModel.create(newCart);
-      return res.status(201) .send({status: true, message: "Cart is created and medicine added to cart", data: createCart })
+      return res.status(201).send({ status: true, message: "Cart is created and medicine added to cart", data: createCart })
     }
 
-    // If medicine does not exist in the cart
-    const medicineExistinCart = userCart.items.findIndex((items) => items.medicineId.toString() === medicineId)
-    if (medicineExistinCart === -1) {
-      const addMedicineinCart = await cartModel.findOneAndUpdate({ buyerId: buyerId },
+    //If medicine does not exist in the cart
+    const medicineIndexInCart = userCart.items.findIndex((items) => items.medicineId.toString() === medicineId)
+    if (medicineIndexInCart === -1) {
+      const addMedicineInCart = await cartModel.findOneAndUpdate({ buyerId: buyerId },
         {
-          $push: { items: { medicineId: medicineId, quantity: 1 } },
+          $push: { items: { medicineId: medicineId, quantity: quantity } },
           $inc: { totalPrice: isexistMedicine.price },
         },
         { new: true }
       );
 
-      return res.status(200).send({ status: true, message: "New medicine added to cart", data: addMedicineinCart })
-    } // If medicine exist in cart
+      return res.status(200).send({ status: true, message: "New medicine added to cart", data: addMedicineInCart })
+
+    } //If medicine exist in cart
     else {
       const incrementMedicineQuantity = await cartModel.findOneAndUpdate(
         { buyerId: buyerId, "items.medicineId": medicineId },
@@ -71,61 +87,69 @@ const addMedicineTocart = async function (req, res) {
         { new: true }
       );
 
-      return res.status(200).send({status: true, message: "Medicine's quantity and price updated in the cart",data: incrementMedicineQuantity });
+      return res.status(200).send({ status: true, message: "Medicine's quantity and price updated in the cart", data: incrementMedicineQuantity });
     }
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message })
   }
 };
 
-// View Cart:
+//View Cart:
 const viewCart = async function (req, res) {
   try {
     const buyerId = req.params.buyerId;
+
     if (!validation.checkObjectId(buyerId)) {
       return res.status(400).send({ status: false, message: "Invalid buyerId" })
     }
-    const isexistCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId")
 
-    if (!isexistCart) {
+    const existingCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId")
+
+    if (!existingCart) {
       return res.status(404).send({ status: false, message: "Cart not found" });
     }
-    if (isexistCart.buyerId != req.decodedToken.userId) {
+
+    if (existingCart.buyerId.toString() !== req.decodedToken.userId) {
       return res.status(403).send({ status: false, message: "Not authorized to view the cart" })
     }
 
-    return res.status(200).send({status: true, message: "Successfully fetched cart data", data: isexistCart })
+    return res.status(200).send({ status: true, message: "Successfully fetched cart data", data: existingCart })
+
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 };
 
-// Update Cart Quantity:
-const updateCartQuantity = async function (req, res) {
+//Update Cart Quantity:
+const decreaseCartQuantity = async function (req, res) {
   try {
     const buyerId = req.params.buyerId;
+
     if (!validation.checkObjectId(buyerId)) {
       return res.status(400).send({ status: false, message: "Invalid buyerId" })
     }
-    if (buyerId !== req.decodedToken.userId) {
-      return res.status(403).send({status: false, message: "Not authorized to add medicine in cart" })
+    if (buyerId.toString() !== req.decodedToken.userId) {
+      return res.status(403).send({ status: false, message: "Not authorized to update cart quantity" })
     }
 
-    const isexistCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId");
+    const existingCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId");
+    if (!existingCart) {
+      return res.status(404).send({ status: false, message: "Cart not found" });
+    }
+
     const medicineId = req.body.medicineId;
 
-    if (!validation.checkData(medicineId) || !validation.checkObjectId(medicineId) ) {
+    if (!validation.checkData(medicineId) || !validation.checkObjectId(medicineId)) {
       return res.status(400).send({ status: false, message: "Invalid medicineId" })
     }
 
-    const isexistMedicine = isexistCart.items.findIndex((item) => item.medicineId._id.toString() === medicineId)
-    if (isexistMedicine === -1) {
+    const medicineIndex = existingCart.items.findIndex((item) => item.medicineId._id.toString() === medicineId)
+    if (medicineIndex === -1) {
       return res.status(404).send({ status: false, message: "Medicine not found in the cart" });
     }
 
-    
-    const quantity = isexistCart.items[isexistMedicine].quantity;
-    const price = isexistCart.items[isexistMedicine].medicineId.price;
+    const quantity = existingCart.items[medicineIndex].quantity;
+    const price = existingCart.items[medicineIndex].medicineId.price;
 
     if (quantity === 1) {
       await cartModel.findOneAndUpdate(
@@ -138,52 +162,62 @@ const updateCartQuantity = async function (req, res) {
 
       return res.status(200).send({ status: true, message: "Medicine removed from cart" });
     } else {
-      // Decrease the quantity by 1
-      const removequantityBYone = await cartModel.findOneAndUpdate(
+      //Decrease the quantity by 1
+      const updatedCart = await cartModel.findOneAndUpdate(
         { buyerId: buyerId, "items.medicineId": medicineId },
         { $inc: { "items.$.quantity": -1, totalPrice: -price } },
         { new: true }
       );
-      return res.status(200).send({status: true, message: "Medicine quantity decreased by 1", data: removequantityBYone })
+
+      return res.status(200).send({ status: true, message: "Medicine quantity decreased by 1", data: updatedCart })
     }
+
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 };
 
-// Delete Medicine From Cart:
+//Delete Medicine From Cart:
 const deleteMedicinefromCart = async function (req, res) {
   try {
     const buyerId = req.params.buyerId;
-    if (!validation.checkObjectId(buyerId)) {
-      return res.status(400).send({ status: false, message: "Invalid buyerId" })
-    }
 
-    const isexistCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId")
-    if (!isexistCart) {
-      return res.status(404).send({ status: false, message: "Cart not found" });
-    }
-    if (isexistCart.buyerId.toString() !== req.decodedToken.userId) {
-      return res.status(403).send({status: false, message: "Not authorized to delete medicine from cart" })
+    if (!validation.checkObjectId(buyerId)) {
+      return res.status(400).send({ status: false, message: "Invalid buyerId" });
     }
 
     const medicineId = req.body.medicineId;
-    if (!validation.checkObjectId(medicineId)) {
-      return res.status(400).send({ status: false, message: "Invalid MedicineId" })
+    if (!validation.checkData(medicineId)) {
+      return res.status(400).send({ status: false, message: "Provide medicineId" });
     }
 
-    const isexistMedicine = isexistCart.items.findIndex(
+    if (!validation.checkObjectId(medicineId)) {
+      return res.status(400).send({ status: false, message: "Invalid medicineId" });
+    }
+
+    const existingCart = await cartModel.findOne({ buyerId: buyerId }).populate("items.medicineId")
+
+    if (!existingCart) {
+      return res.status(404).send({ status: false, message: "Cart not found" });
+    }
+
+    if (existingCart.buyerId.toString() !== req.decodedToken.userId) {
+      return res.status(403).send({ status: false, message: "Not authorized to delete medicine from cart" })
+    }
+
+    const medicineIndex = existingCart.items.findIndex(
       (item) => item.medicineId._id.toString() === medicineId
     );
-    if (isexistMedicine === -1) {
+
+    if (medicineIndex === -1) {
       return res.status(404).send({ status: false, message: "Medicine not found in the cart" })
     }
 
-    // Calculate the price of the removed medicine
-    const removedMedicine = isexistCart.items[isexistMedicine];
+    //Calculate the price of the removed medicine
+    const removedMedicine = existingCart.items[medicineIndex];
     const removedPrice = removedMedicine.medicineId.price * removedMedicine.quantity;
 
-    // Delete single medicine from the cart
+    //Delete medicine from the cart
     await cartModel.findOneAndUpdate(
       { buyerId: buyerId },
       {
@@ -193,9 +227,10 @@ const deleteMedicinefromCart = async function (req, res) {
     );
 
     return res.status(200).send({ status: true, message: "Single medicine removed from cart" })
+
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message })
   }
 };
 
-module.exports = {addMedicineTocart, viewCart, updateCartQuantity, deleteMedicinefromCart }
+module.exports = { addMedicineTocart, viewCart, decreaseCartQuantity, deleteMedicinefromCart }

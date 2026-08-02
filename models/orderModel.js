@@ -5,7 +5,7 @@ const orderSchema = new mongoose.Schema({
         type: objectId,
         ref: 'User',
         required: true
-    }, 
+    },
     items: [{
         medicineId: {
             type: objectId,
@@ -16,13 +16,12 @@ const orderSchema = new mongoose.Schema({
             type: Number,
             default: 1
         }
-    }
-    ],
+    }],
     orderStatus: {
         type: String,
         enum: ['pending', 'completed', 'cancelled'],
         default: 'pending'
-    },//totalItems is nothing but the total number of different medicines in the cart nothing but items.length
+    },
     totalItems: {
         type: Number,
         required: true

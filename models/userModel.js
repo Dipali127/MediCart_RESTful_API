@@ -1,41 +1,44 @@
 const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
     firstName: {
-        type:String
+        type: String,
+        required: true
     },
-    lastName:{
-        type:String
+    lastName: {
+        type: String,
+        required: true
     },
-    email:{
-        type:String,
-        unique:true
+    email: {
+        type: String,
+        required: true,
+        unique: true
     },
-    password:{
-        type:String,
-        minLength:8
+    password: {
+        type: String,
+        required: true,
+        minLength: 8
     },
-    mobileNumber:{
-        type:String,
-        unique:true
-    },role:{
-        type:String,
-        enum:["buyer","seller"],
+    mobileNumber: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    role: {
+        type: String,
+        enum: ["buyer", "seller"],
         default: "buyer"
     },
-    address:{
-        state:{
-            type:String
+    address: {
+        country: {
+            type: String
         },
-        city:{
-            type:String
+        state: {
+            type: String
         },
-        pincode:{
-            type:Number
-        },
-        street:{
-            type:String
+        city: {
+            type: String
         }
     }
-},{timestamps:true})
+}, { timestamps: true })
 
 module.exports = mongoose.model('User', userSchema);

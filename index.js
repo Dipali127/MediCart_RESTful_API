@@ -1,35 +1,27 @@
-const path = require('path');
-const express = require('express');
-const app = express();
-// Middleware to handle json data
-app.use(express.json())
-
-// Load environment variables from .env file
+//Load environment variables from .env file
 require('dotenv').config({ path: '../.env' });
 const port = process.env.PORT || 3000;
 
-// Import routes
+const express = require('express');
+const app = express();
+//Middleware to handle json data
+app.use(express.json())
+
+//Import routes
 const userRoute = require('./routes/userRoute.js');
 const medicineRoute = require('./routes/medicineRoute.js');
 const cartRoute = require('./routes/cartRoute.js');
 const orderRoute = require('./routes/orderRoute.js')
-const paymentRoute = require('./routes/paymentRoute.js')
-const mongoose = require('mongoose');
 
-// Connect to MongoDB using connection string from environment variables
-mongoose.connect(process.env.CLUSTER_STRING).then(() => { console.log("Database connected successfully") })
+//Connect to MongoDB using connection string from environment variables
+const mongoose = require('mongoose');
+mongoose.connect(process.env.MONGO_URI).then(() => { console.log("Database connected successfully") })
     .catch((error) => { console.log(error.message) });
 
-// Serve static files (HTML, CSS, JS)
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Handle all routes
+//Handle all routes
 app.use('/user', userRoute);
 app.use('/medicine', medicineRoute);
 app.use('/cart',  cartRoute);
 app.use('/order', orderRoute);
-app.use('/payment', paymentRoute);
 
-app.listen(port, () => {
-    console.log(`Server listen on port: ${port}`)
-})
+app.listen(port, () => { console.log(`Server is listening on port ${port}`)})

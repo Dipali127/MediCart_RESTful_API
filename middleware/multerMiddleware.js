@@ -1,28 +1,27 @@
 const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-// Ensure the 'uploads' directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
+const uploadDir = path.join(__dirname, "../uploads");
+
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Created multer instance with disk storage to upload files
+
+//Configure Multer disk storage for uploading images
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // null is custom error added by developer
-        return cb(null, uploadsDir) 
+     destination: function (req, file, cb) {
+        return cb(null, uploadDir) //null is custom error added by developer
     },
     filename: function (req, file, cb) {
-        // Use a timestamp to avoid name conflicts
-        cb(null, `${Date.now()}-${file.originalname}`); 
+        cb(null, `${Date.now()}-${file.originalname}`); //Use a timestamp to avoid file name conflicts
     }
 
 })
 
 
-// Configure Multer to accept only PDF files
+//Configure Multer to accept only image files (JPEG, JPG, PNG)
 const upload = multer({
     storage: storage,
     fileFilter: function (req, file, cb) {
@@ -32,10 +31,10 @@ const upload = multer({
             cb(null, true); 
         } else {
             // Reject the file
-            cb(new Error('Invalid file type'), false); 
+            cb(new Error('Invalid file type'), false); //doesn't accept the file
         }
     }
 });
 
-// Export the Multer instance
+//Export Multer middleware to handle single image file with the field name "medicineImage"
 module.exports = upload.single("medicineImage")

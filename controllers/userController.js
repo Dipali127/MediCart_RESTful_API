@@ -3,15 +3,16 @@ const validation = require("../validator/validation")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-// Register User:
+//Register User:
 const signUp = async function (req, res) {
   try {
     const data = req.body;
-    if (!validation.isEmpty(data)) {
+    if (validation.isEmpty(data)) {
       return res.status(400).send({ status: false, message: "Provide details for registration" })
     }
 
     const { firstName, lastName, email, password, mobileNumber, role } = data;
+
     if (!validation.checkData(firstName)) {
       return res.status(400).send({ status: false, message: "firstName is required" })
     }
@@ -25,7 +26,7 @@ const signUp = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid lastName" })
     }
     if (!validation.checkData(email)) {
-      return res.status(400).send({ status: false, message: "Email is  required" })
+      return res.status(400).send({ status: false, message: "Email is required" })
     }
     if (!validation.checkEmail(email)) {
       return res.status(400).send({ status: false, message: "Invalid email" })
@@ -42,71 +43,83 @@ const signUp = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid password" })
     }
 
-    // Hash the password before saving it in database
+    //Hash the password before saving it in database
     const encryptPassword = await bcrypt.hash(password, 10)
 
     if (!validation.checkData(mobileNumber)) {
       return res.status(400).send({ status: false, message: "MobileNumber is required" })
     }
-    if (!validation.checkMobile(mobileNumber)) {
+    if (!validation.validateMobile(mobileNumber)) {
       return res.status(400).send({ status: false, message: "Invalid mobile number format" })
     }
-    const uniqueMobile = await userModel.findOne({mobileNumber: mobileNumber})
+    const uniqueMobile = await userModel.findOne({ mobileNumber: mobileNumber })
     if (uniqueMobile) {
-      return res.status(409).send({status: false, message: "Provided mobile number already exist" })
+      return res.status(409).send({ status: false, message: "Provided mobile number already exist" })
     }
 
-    // Prepare the new user (buyer or seller) details with the encrypted password
+    //Prepare the new user (buyer or seller) details with the encrypted password
     const newDetails = {
-      firstName: firstName,
-      lastName: lastName,
-      email: email,
+      firstName,
+      lastName,
+      email,
       password: encryptPassword,
-      mobileNumber: mobileNumber,
-      role: role ? role : "buyer",
+      mobileNumber,
+      role: role || "buyer",
     };
 
     const createUser = await userModel.create(newDetails)
-    return res.status(201).send({status: true, message: "User registered successfully", data: createUser })
+
+    //Create new javascript object from mongoose document to hide password
+    const newResponse = createUser.toObject();
+    delete newResponse.password;
+
+    return res.status(201).send({ status: true, message: "User registered successfully", data: newResponse })
+
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 }
 
-// Login User:
+//Login User:
 const signIn = async function (req, res) {
   try {
     const data = req.body;
-    if (!validation.isEmpty(data)) {
-      return res.status(400).send({status: false, message: "Provide email and password for login" })
+
+    if (validation.isEmpty(data)) {
+      return res.status(400).send({ status: false, message: "Provide email and password for login" })
     }
 
     const { email, password } = data;
+
     if (!validation.checkData(email)) {
       return res.status(400).send({ status: false, message: "Provide email for login" })
     }
+
     if (!validation.checkEmail(email)) {
       return res.status(400).send({ status: false, message: "Invalid email" })
     }
 
+    //Check if the provided email doesn't exist in database
     const isemailExist = await userModel.findOne({ email: email })
     if (!isemailExist) {
       return res.status(404).send({ status: false, message: "Email not found" })
     }
+
     if (!validation.checkData(password)) {
       return res.status(400).send({ status: false, message: "Provide password for login" })
     }
+
     if (!validation.checkPassword(password)) {
       return res.status(400).send({ status: false, message: "Invalid password" })
     }
 
-    // Compare hashedPassword with the buyer or seller provided password
+    //Compare hashedPassword with the buyer or seller provided password
     const comparePassword = await bcrypt.compare(password, isemailExist.password)
     if (!comparePassword) {
-      return res.status(404).send({ status: false, message: "Incorrect password" })
+      return res.status(401).send({ status: false, message: "Incorrect password" })
     }
 
-    // Generate token
+    //Generate token 
     const token = jwt.sign(
       {
         userId: isemailExist._id.toString(),
@@ -116,6 +129,8 @@ const signIn = async function (req, res) {
       { expiresIn: "1h" }
     );
 
+    
+    //Send the generated token in the response header
     res.set("Authorization", `Bearer ${token}`);
 
     return res.status(200).send({ status: true, message: "Login successfully", data: token })
@@ -124,40 +139,41 @@ const signIn = async function (req, res) {
   }
 };
 
-// Address of user(buyer):
+//Address of user(buyer):
 const addressofUser = async function (req, res) {
   try {
     const address = req.body;
-    if (!validation.isEmpty(address)) {
+
+    if (validation.isEmpty(address)) {
       return res.status(400).send({ status: false, message: "Provide details of address" })
     }
 
-    const { state, city, pincode, street } = address;
+    const { country, state, city } = address;
+
+    if (!validation.checkData(country)) {
+      return res.status(400).send({ status: false, message: "Country is required" })
+    }
+
     if (!validation.checkData(state)) {
       return res.status(400).send({ status: false, message: "State is required" })
     }
+
     if (!validation.checkData(city)) {
       return res.status(400).send({ status: false, message: "City is required" })
     }
-    if (!validation.checkData(pincode)) {
-      return res.status(400).send({ status: false, message: "Pincode is required" })
-    }
-    if (!validation.isValidPincode(pincode)) {
-      return res.status(400).send({ status: false, message: "Invalid pincode" })
-    }
-    if (!validation.checkData(street)) {
-      return res.status(400).send({ status: false, message: "Street is required" })
-    }
-    // Retrieve userId from decoded token
+
+    //Retrieve userId from decoded token
     const userId = req.decodedToken.userId;
 
-    // Update buyer's address in the database
+    //Update buyer's address in the database
     const addAddress = await userModel.findOneAndUpdate(
       { _id: userId },
       { $set: { address: address } },
       { new: true }
     );
+
     return res.status(200).send({ status: true, message: "address added", data: addAddress })
+
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }

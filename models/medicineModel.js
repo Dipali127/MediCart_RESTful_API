@@ -4,7 +4,7 @@ const medicineSchema = new mongoose.Schema({
     seller: {
         type: objectId,
         ref: "User",
-        required:true
+        required: true
     },
     category: {
         type: String,
@@ -35,14 +35,6 @@ const medicineSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    currencyId: {
-        type: String,
-        required: true
-    },
-    currencyFormat: {
-        type: String,
-        required: true
-    },
     expiryDate: {
         type: Date,
         default: null
@@ -51,9 +43,6 @@ const medicineSchema = new mongoose.Schema({
         type: Boolean,
         default: false,
 
-    },deletedAt: {
-        type: Date,
-        default: null
     }
 }, { timestamps: true })
 
