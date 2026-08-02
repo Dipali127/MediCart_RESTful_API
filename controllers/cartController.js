@@ -74,7 +74,7 @@ const addMedicineTocart = async function (req, res) {
 
       return res.status(200).send({ status: true, message: "New medicine added to cart", data: addMedicineInCart })
 
-    } //If medicine exist in cart
+    } //If medicine exist in the cart
     else {
       const incrementMedicineQuantity = await cartModel.findOneAndUpdate(
         { buyerId: buyerId, "items.medicineId": medicineId },

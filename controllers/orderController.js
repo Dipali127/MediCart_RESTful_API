@@ -42,7 +42,7 @@ const placeOrder = async function (req, res) {
 
     const createOrder = await orderModel.create(proceedOrder);
 
-    //Create Razorpay order
+    //Create a Razorpay order
     const options = {
       amount: amountInPaise,
       currency: "INR",

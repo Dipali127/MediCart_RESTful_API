@@ -198,7 +198,7 @@ const updateMedicine = async function (req, res) {
       return res.status(403).send({ status: false, message: "Unauthorized to update" })
     }
 
-    //Only not deleted medicine can be updated
+    //Only "not deleted" medicine can be updated
     let updatedField = { isDeleted: false };
 
     //Handle medicine image update

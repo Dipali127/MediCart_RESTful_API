@@ -69,7 +69,7 @@ const signUp = async function (req, res) {
 
     const createUser = await userModel.create(newDetails)
 
-    //Create new javascript object from mongoose document to hide password
+    //Create a new javascript object from mongoose document to hide password
     const newResponse = createUser.toObject();
     delete newResponse.password;
 
