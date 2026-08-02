@@ -4,6 +4,13 @@
 MediCart_RESTful_API is an eCommerce medicine store backend API designed with a role-based access model. It allows buyers to manage their cart, place orders, and integrate with Razorpay for order creation, while sellers can add medicines to the store. The API ensures that each role can only perform actions appropriate to them.
 
 
+## Live Deployment
+
+The MediCart API is deployed on Render:
+
+🔗 Live API URL: https://medicart-restful-api.onrender.com
+
+
 ## Roles and Permissions
 ### Buyer
 * #### Can:
