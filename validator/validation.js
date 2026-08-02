@@ -32,7 +32,7 @@ const validateInput = (input) => /^[0-9\s]+$/.test(input);
 const isValidPrice =(price) => {return (/^\d+(,\d{3})*(\.\d{1,2})?$/.test(price))}
 
 
-//Validates a MongoDB ObjectId using mongoose.isValidObjectId().
+//Validate a MongoDB ObjectId using mongoose.isValidObjectId().
 const checkObjectId = (id) => { return mongoose.isValidObjectId(id); }
 
 module.exports = {
