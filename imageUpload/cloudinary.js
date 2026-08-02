@@ -2,7 +2,7 @@
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
-//Connects Cloudinary to the application using credentials from environment variables
+//Connects Cloudinary to an application using credentials from environment variables
 cloudinary.config({ 
     cloud_name: process.env.Cloudinary_Cloud_Name ,
     api_key: process.env.Cloudinary_Api_Key, 
