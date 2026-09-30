@@ -24,29 +24,6 @@ const addMedicine = async function (req, res) {
       return res.status(400).send({ status: false, message: "Image of medicine is required" });
     }
 
-    const medicineImage = req.file.path;
-
-    //Upload the medicine image file to Cloudinary and get the hosted URL using "retry mechanism"
-    let attempts = 0, maxAttempt = 3;
-    let cloudinaryResponse;
-    while (attempts < maxAttempt) {
-      cloudinaryResponse = await uploadFileOnCloudinary(medicineImage);
-      if (cloudinaryResponse) {
-        break;
-      }
-
-      attempts++;
-    }
-
-    //If all attempts fail, delete local file and return error
-    if (!cloudinaryResponse) {
-      deleteLocalFile(medicineImage);
-      return res.status(500).send({ status: false, message: "Failed to upload medicine image to Cloudinary after 3 attempts" });
-    }
-
-    //Remove file from local storage after successful upload
-    deleteLocalFile(medicineImage);
-
     const sellerId = req.decodedToken.userId;
 
     const {
@@ -54,9 +31,8 @@ const addMedicine = async function (req, res) {
       medicineName,
       description,
       form,
-      stockQuantity,
       price,
-      expiryDate,
+      expiryDate
     } = data;
 
     if (!validation.checkData(category)) {
@@ -87,10 +63,6 @@ const addMedicine = async function (req, res) {
       })
     }
 
-    if (!validation.checkData(stockQuantity)) {
-      return res.status(400).send({ status: false, message: "stockQuantity is required" })
-    }
-
     if (!validation.checkData(price)) {
       return res.status(400).send({ status: false, message: "Price is required" })
     }
@@ -99,19 +71,49 @@ const addMedicine = async function (req, res) {
       return res.status(400).send({ status: false, message: "Enter a valid price" })
     }
 
+    if (!expiryDate) {
+      return res.status(400).send({ status: false, message: "expiry date of medicine is required" })
+    }
+
     //Parsing expiry date of medicine using moment.js
-    const expiredDateofMedicine = moment(expiryDate, "YYYY-MM-DD", true);
+    let expiredDateofMedicine = moment(expiryDate, "YYYY-MM-DD", true);
 
     if (!expiredDateofMedicine.isValid()) {
-      return res.status(400).send({ status: false, message: "Invalid date format" })
+      return res.status(400).send({ status: false, message: "Invalid date format" });
     }
 
     //Get the current date
     const currentDate = moment();
+
     if (!expiredDateofMedicine.isAfter(currentDate)) {
-      return res.status(400).send({ status: false, message: "expiry date of medicine must be in future" });
+      return res.status(400).send({ status: false, message: "Expiry date of medicine must be in future" });
     }
 
+    const medicineImage = req.file.path;
+
+    //Upload to Cloudinary
+    let attempts = 0, maxAttempt = 3;
+    let cloudinaryResponse;
+
+    while (attempts < maxAttempt) {
+      cloudinaryResponse = await uploadFileOnCloudinary(medicineImage);
+
+      if (cloudinaryResponse) {
+        break;
+      }
+
+      attempts++;
+    }
+
+    if (!cloudinaryResponse) {
+      deleteLocalFile(medicineImage);
+      return res.status(500).send({
+        status: false,
+        message: "Failed to upload medicine image to Cloudinary after 3 attempts"
+      });
+    }
+
+    deleteLocalFile(medicineImage);
 
     //Prepare new medicine details
     const addnewMedicine = {
@@ -121,7 +123,6 @@ const addMedicine = async function (req, res) {
       medicineName: medicineName,
       description: description,
       form: form,
-      stockQuantity: stockQuantity,
       price: price,
       expiryDate: expiredDateofMedicine,
       isDeleted: false
@@ -143,12 +144,23 @@ const addMedicine = async function (req, res) {
 //Get Medicine:
 const getMedicine = async function (req, res) {
   try {
-    //Extract query from request parameter
+    //Extract query parameters from the request
     let filter = req.query;
 
     //Pagination:
-    let page = Number(filter.page) || 1;
-    let limit = Number(filter.limit) || 2;
+    let page = Number(filter.page);
+    let limit = Number(filter.limit);
+
+    if (filter.page !== undefined && (!Number.isInteger(page) || page < 1)) {
+      return res.status(400).send({ status: false, message: "Page must be a positive integer" });
+    }
+
+    if (filter.limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+      return res.status(400).send({ status: false, message: "Limit must be a positive integer" });
+    }
+
+    page = page || 1;
+    limit = limit || 2;
     let skip = (page - 1) * limit;
 
     let query = { isDeleted: false };
@@ -182,7 +194,7 @@ const updateMedicine = async function (req, res) {
     const medicineID = req.params.medicineId;
 
     if (!validation.checkObjectId(medicineID)) {
-      return res.status(400).send({ status: false, message: "Invalid objectId" });
+      return res.status(400).send({ status: false, message: "Invalid medicineId" });
     }
 
     const isexistMedicine = await medicineModel.findById(medicineID);
@@ -191,41 +203,18 @@ const updateMedicine = async function (req, res) {
       return res.status(404).send({ status: false, message: "Medicine not found" })
     }
 
+    if (isexistMedicine.isDeleted === true) {
+      return res.status(400).send({ status: false, message: "Deleted medicine cannot be updated" });
+    }
+
     const sellerId = isexistMedicine.seller;
 
-    //Check authorization: Only the seller who listed the medicine can update it
+    //Check authorization: Only the seller who created the medicine can update it
     if (req.decodedToken.userId !== sellerId.toString()) {
       return res.status(403).send({ status: false, message: "Unauthorized to update" })
     }
 
-    //Only "not deleted" medicine can be updated
-    let updatedField = { isDeleted: false };
-
-    //Handle medicine image update
-    if (req.file) {
-      //multer uploaded file inside req.file property
-      const medicineImage = req.file.path;
-
-      let attempt = 0, maxAttempt = 3, cloudinaryResponse;
-      while (attempt < maxAttempt) {
-        //Upload file in cloudinary
-        cloudinaryResponse = await uploadFileOnCloudinary(medicineImage);
-        if(cloudinaryResponse){
-          break;
-        }
-        attempt++;
-      }
-
-      if (!cloudinaryResponse) {
-        deleteLocalFile(medicineImage)
-        return res.status(500).send({ status: false, message: "Failed to upload image to Cloudinary" });
-      }
-
-      //After cloudinary successfully uploaded medicineImage to cloud storage, remove locally stored medicine image.
-      deleteLocalFile(medicineImage);
-      //Store hosted URL of uploaded image file returned by cloudinary server to database.
-      updatedField.medicineImage = cloudinaryResponse.url;
-    }
+    let updatedField = {};
 
     //Handle other fields to update
     const {
@@ -233,7 +222,6 @@ const updateMedicine = async function (req, res) {
       medicineName,
       description,
       form,
-      stockQuantity,
       price,
       expiryDate,
     } = req.body;
@@ -255,10 +243,6 @@ const updateMedicine = async function (req, res) {
         return res.status(400).send({ status: false, message: "Form only include tablet,capsule and syrup" });
       }
       updatedField.form = form;
-    }
-
-    if (stockQuantity) {
-      updatedField.stockQuantity = stockQuantity;
     }
 
     if (price) {
@@ -286,6 +270,33 @@ const updateMedicine = async function (req, res) {
       updatedField.expiryDate = expiredDateofMedicine;
     }
 
+    //Handle medicine image update
+    if (req.file) {
+      //multer uploaded file inside req.file property
+      const medicineImage = req.file.path;
+
+      let attempt = 0, maxAttempt = 3, cloudinaryResponse;
+      while (attempt < maxAttempt) {
+        //Upload file in cloudinary
+        cloudinaryResponse = await uploadFileOnCloudinary(medicineImage);
+        if (cloudinaryResponse) {
+          break;
+        }
+        attempt++;
+      }
+
+      if (!cloudinaryResponse) {
+        deleteLocalFile(medicineImage)
+        return res.status(500).send({ status: false, message: "Failed to upload image to Cloudinary" });
+      }
+
+      //After cloudinary successfully uploaded medicineImage to cloud storage, remove locally stored 
+      //medicine image.
+      deleteLocalFile(medicineImage);
+      //Store hosted URL of uploaded image file returned by cloudinary server to database.
+      updatedField.medicineImage = cloudinaryResponse.url;
+    }
+
     const medicineUpdate = await medicineModel.findByIdAndUpdate({ _id: medicineID }, updatedField, { new: true });
 
     return res.status(200).send({ status: true, message: "Updated Successfully", data: medicineUpdate })
@@ -295,7 +306,7 @@ const updateMedicine = async function (req, res) {
     if (req.file?.path) {
       deleteLocalFile(req.file.path);
     }
-    
+
     return res.status(500).send({ status: false, message: error.message })
   }
 };
@@ -305,7 +316,7 @@ const deleteMedicine = async function (req, res) {
   try {
     const medicineID = req.params.medicineId;
     if (!validation.checkObjectId(medicineID)) {
-      return res.status(400).send({ status: false, message: "Invalid objectId" });
+      return res.status(400).send({ status: false, message: "Invalid medicineId" });
     }
 
     const isexistMedicine = await medicineModel.findById(medicineID);
@@ -313,14 +324,14 @@ const deleteMedicine = async function (req, res) {
       return res.status(404).send({ status: false, message: "Medicine not found" })
     }
 
-    const sellerId = isexistMedicine.seller;
-    //Check authorization: Only the seller who listed the medicine can delete it
-    if (req.decodedToken.userId !== sellerId.toString()) {
-      return res.status(403).send({ status: false, message: "Unauthorized to delete" })
-    }
-
     if (isexistMedicine.isDeleted === true) {
       return res.status(400).send({ status: false, message: "Medicine is already deleted" })
+    }
+
+    const sellerId = isexistMedicine.seller;
+    //Check authorization: Only the seller who created the medicine can delete it
+    if (req.decodedToken.userId !== sellerId.toString()) {
+      return res.status(403).send({ status: false, message: "Unauthorized to delete" })
     }
 
     await medicineModel.findByIdAndUpdate({ _id: medicineID }, { $set: { isDeleted: true } });

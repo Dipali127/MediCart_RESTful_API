@@ -12,7 +12,9 @@ const checkData = (data) => { return typeof data === 'string' && data.trim().len
 const checkName = (name) => /^[A-Za-z\s]+$/.test(name);
 
 //Validates an email address using a regular expression
-const checkEmail = (email) => { return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email) };
+const checkEmail = (email) => {
+    return /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+};
 
 //Password must contain one small letter, one capital letter, one digit and one special character.
 //Length of password should be a minimum of 8 characters
@@ -29,8 +31,9 @@ const validateInput = (input) => /^[0-9\s]+$/.test(input);
 //Validates if the input string represents a valid price in a standard format.
 //Examples of valid prices: "100", "1,000", "10,000.00", "99.99".
 //Examples of invalid prices: "10.123", "1,00".
-const isValidPrice =(price) => {return (/^\d+(,\d{3})*(\.\d{1,2})?$/.test(price))}
-
+const isValidPrice = (price) => {
+    return /^(?!0(?:\.0{1,2})?$)\d+(?:\.\d{1,2})?$/.test(String(price));
+};
 
 //Validate a MongoDB ObjectId using mongoose.isValidObjectId().
 const checkObjectId = (id) => { return mongoose.isValidObjectId(id); }

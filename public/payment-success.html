@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>RazorPay Checkout Form</title>
+</head>
+
+<body>
+    <input type="email" id="email" placeholder="Enter your email address">
+    <input type="password" id="password" placeholder="Enter your password">
+    <button id="login">Login</button>
+    <input type="text" id="cartId" placeholder="Enter Cart ID">
+    <button id="createOrder">Place Order</button>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        let token;
+        document.getElementById('login').onclick = async function () {
+               console.log("Login button clicked");
+            // Get email and password send by user
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            // Call backend to verify user's credentials such as email and password
+            const res = await fetch('http://localhost:3002/user/signIn', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email,
+                    password: password
+                })
+            });
+            console.log(res);
+            const result = await res.json();
+            console.log("Login response body:", result);
+            if (!result.status) {
+                alert(result.message);
+                return;
+            }
+
+            token = result.data;
+            console.log("Token:", token);
+            alert("Login Successful")
+        }
+
+        document.getElementById('createOrder').onclick = async function () {
+
+            if (!token) {
+                alert("Please login first");
+                return;
+            }
+
+            // Get Cart ID entered by the user
+            const cartId = document.getElementById("cartId").value;
+            // Step 1: Call backend to create the order
+            const res = await fetch('http://localhost:3002/order/placeOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+
+                body: JSON.stringify({
+                    cartId: cartId
+                })
+            });
+
+            const order = await res.json();
+            if (!order.status) {
+                alert(order.message);
+                return;
+            }
+
+            // Step 2: Open Razorpay Checkout
+            const options = {
+                // Razorpay Test Key ID
+                key: "rzp_test_TI1PjHZJec0y7U",
+                // Razorpay Order ID returned by backend
+                order_id: order.data.razorpayOrderId,
+                // Amount in paise
+                amount: order.data.totalPrice,
+                currency: "INR",
+                name: "MediCart Test",
+
+                // Step 3: Razorpay returns payment details
+                handler: function (response) {
+                    console.log("Razorpay Response:", response);
+                    // Step 4: Send payment details to backend
+                    // for signature verification
+                    fetch('http://localhost:3002/order/verifyPayment', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            razorpayOrderId: response.razorpay_order_id,
+                            paymentId: response.razorpay_payment_id,
+                            razorpaySignature: response.razorpay_signature
+                        })
+                    })
+                        .then(r => r.json())
+                        .then(data => {
+                            console.log("Verification Response:", data);
+                            alert(JSON.stringify(data));
+
+                        });
+                }
+            };
+
+            // Step 5: Create Razorpay instance
+            const razorpay = new Razorpay(options);
+            // Step 6: Open Razorpay Checkout
+            razorpay.open();
+        };
+
+    </script>
+</body>
+
+</html>

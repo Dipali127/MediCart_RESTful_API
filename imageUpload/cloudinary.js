@@ -1,4 +1,4 @@
-//cloudinary code:
+//Cloudinary Code:
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
@@ -25,7 +25,7 @@ const uploadFileOnCloudinary = async function(localFilePath){
 
     }catch(error){
         console.error(`Upload failed: ${error.message}`);
-        //Reomve locally saved temporary file as the uploaded operation got failed
+        //Remove locally saved temporary file as the uploaded operation got failed
         fs.unlinkSync(localFilePath);
         return null;
     }

@@ -25,8 +25,8 @@ const userSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["buyer", "seller"],
-        default: "buyer"
+        required: true,
+        enum: ["buyer", "seller"]
     },
     address: {
         country: {

@@ -1,7 +1,8 @@
-const orderModel = require("../models/orderModel.js");
-const validation = require("../validator/validation");
-const cartModel = require("../models/cartModel");
-const razorpayInstance = require("../razorpayConfig.js");
+const orderModel = require("../models/orderModel.js")
+const validation = require("../validator/validation")
+const cartModel = require("../models/cartModel")
+const razorpayInstance = require("../razorpayConfig.js")
+const crypto = require("crypto")
 
 //Place an Order:
 const placeOrder = async function (req, res) {
@@ -23,7 +24,7 @@ const placeOrder = async function (req, res) {
     }
 
     if (isuserCart.buyerId.toString() !== req.decodedToken.userId) {
-      return res.status(403).send({ status: false, message: "Not authorized to place this order" });
+      return res.status(403).send({ status: false, message: "Buyer is not authorized to place an order" })
     }
 
     //Convert totalPrice to paise and ensure it's an integer
@@ -45,12 +46,17 @@ const placeOrder = async function (req, res) {
     //Create a Razorpay order
     const options = {
       amount: amountInPaise,
-      currency: "INR",
-      receipt: `receipt_order_${createOrder._id}`,
+      currency: "INR"
     };
 
-    const razorpayOrder = await razorpayInstance.orders.create(options);
-    console.log(razorpayOrder.id);
+    let razorpayOrder;
+
+    try {
+      razorpayOrder = await razorpayInstance.orders.create(options);
+    } catch (error) {
+      await orderModel.findByIdAndDelete(createOrder._id);
+      throw error;
+    }
 
     //Save Razorpay order ID in the database
     const updatedOrder = await orderModel.findByIdAndUpdate(createOrder._id, {
@@ -58,12 +64,81 @@ const placeOrder = async function (req, res) {
     }, { new: true }
     );
 
-    return res.status(201).send({ status: true, message: "Order placed successfully", data: updatedOrder });
+    return res.status(201).send({ status: true, message: "Order created successfully", data: updatedOrder });
 
   } catch (error) {
     return res.status(500).send({ status: false, message: error.message });
   }
 };
+
+//Verify Payment
+const verifyPayment = async function (req, res) {
+  try {
+    const { razorpayOrderId, razorpaySignature, paymentId } = req.body;
+    if (!validation.checkData(razorpayOrderId) || !validation.checkData(razorpaySignature) ||
+      !validation.checkData(paymentId)) {
+      return res.status(400).send({ status: false, message: "Invalid data" });
+    }
+
+    const isExistOrder = await orderModel.findOne({ razorpayOrderId: razorpayOrderId });
+    if (!isExistOrder) {
+      return res.status(400).send({ status: false, message: "Order not found" });
+    }
+
+    if (isExistOrder.orderStatus === 'completed') {
+      return res.status(400).send({ status: false, message: "Order is already completed" });
+    }
+
+    if (isExistOrder.buyerId.toString() !== req.decodedToken.userId) {
+      return res.status(403).send({ status: false, message: "Cannot verify payemnt for invalid buyer" })
+    }
+
+    //Generate Signature
+    const body = razorpayOrderId + "|" + paymentId;
+
+    const expectedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(body)
+      .digest("hex");
+
+    if (expectedSignature !== razorpaySignature) {
+      return res.status(400).send({ status: false, message: "Payment verification failed" });
+    }
+
+    const isExistCart = await cartModel.findOne({ buyerId: isExistOrder.buyerId });
+    if (!isExistCart) {
+      return res.status(400).send({ status: false, message: "cart not found" })
+    }
+
+    //Clear the buyer's cart after successful payment verification
+    await cartModel.findByIdAndUpdate(
+      isExistCart._id,
+      {
+        $set: {
+          items: [],
+          totalPrice: 0
+        }
+      }
+    )
+
+    const updatedOrder = await orderModel.findByIdAndUpdate(
+      isExistOrder._id,
+      {
+        $set: {
+          paymentStatus: "success",
+          orderStatus: "completed",
+          cancellable: false
+        }
+      },
+      { new: true }
+    );
+
+    return res.status(200).send({ status: true, message: "Payment verified successfully", data: updatedOrder });
+
+  } catch (error) {
+    return res.status(500).send({ status: false, message: error.message });
+  }
+}
 
 //Cancel Order:
 const cancelOrder = async function (req, res) {
@@ -73,15 +148,12 @@ const cancelOrder = async function (req, res) {
     if (!validation.checkObjectId(buyerId)) {
       return res.status(400).send({ status: false, message: "Invalid buyerId" });
     }
-
+    
     const { orderId } = req.body;
     if (!validation.checkObjectId(orderId)) {
       return res.status(400).send({ status: false, message: "Invalid orderId" });
     }
-    const checkOrder = await orderModel.findOne({
-      _id: orderId,
-      buyerId: buyerId,
-    })
+    const checkOrder = await orderModel.findOne({ _id: orderId, buyerId: buyerId})
 
     if (!checkOrder) {
       return res.status(404).send({ status: false, message: "Order not found" });
@@ -118,4 +190,4 @@ const cancelOrder = async function (req, res) {
 };
 
 
-module.exports = { placeOrder, cancelOrder };
+module.exports = { placeOrder, verifyPayment, cancelOrder };

@@ -27,17 +27,13 @@ const medicineSchema = new mongoose.Schema({
         required: true,
         enum: ["tablet", "capsule", "syrup"]
     },
-    stockQuantity: {
-        type: Number,
-        required: true
-    },
     price: {
         type: Number,
         required: true
     },
     expiryDate: {
-        type: Date,
-        default: null
+        required: true,
+        type: Date
     },
     isDeleted: {
         type: Boolean,

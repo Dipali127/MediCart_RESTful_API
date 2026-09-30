@@ -52,9 +52,18 @@ const signUp = async function (req, res) {
     if (!validation.validateMobile(mobileNumber)) {
       return res.status(400).send({ status: false, message: "Invalid mobile number format" })
     }
+
     const uniqueMobile = await userModel.findOne({ mobileNumber: mobileNumber })
     if (uniqueMobile) {
       return res.status(409).send({ status: false, message: "Provided mobile number already exist" })
+    }
+
+    if (!validation.checkData(role)) {
+      return res.status(400).send({ status: false, message: "role is required" })
+    }
+
+    if (!['buyer', 'seller'].includes(role)) {
+      return res.status(400).send({ status: false, message: "role must be either buyer or seller" })
     }
 
     //Prepare the new user (buyer or seller) details with the encrypted password
@@ -64,7 +73,7 @@ const signUp = async function (req, res) {
       email,
       password: encryptPassword,
       mobileNumber,
-      role: role || "buyer",
+      role: role
     };
 
     const createUser = await userModel.create(newDetails)
@@ -99,7 +108,7 @@ const signIn = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid email" })
     }
 
-    //Check if the provided email doesn't exist in database
+    //Check if the provided email doesn't exist in the database
     const isemailExist = await userModel.findOne({ email: email })
     if (!isemailExist) {
       return res.status(404).send({ status: false, message: "Email not found" })
@@ -129,7 +138,7 @@ const signIn = async function (req, res) {
       { expiresIn: "1h" }
     );
 
-    
+
     //Send the generated token in the response header
     res.set("Authorization", `Bearer ${token}`);
 

@@ -5,7 +5,7 @@ const cartController = require('../controllers/cartController');
 
 router.post('/addCart/:buyerId', auth.authentication, auth.permission('buyer'),cartController.addMedicineTocart);
 router.get('/viewCart/:buyerId', auth.authentication, auth.permission('buyer'),cartController.viewCart);
-router.patch('/updateCartQuantity/:buyerId', auth.authentication, auth.permission('buyer'),cartController.decreaseCartQuantity)
+router.patch('/decreaseCartQuantity/:buyerId', auth.authentication, auth.permission('buyer'),cartController.decreaseCartQuantity)
 router.delete('/deleteMedicine/:buyerId', auth.authentication, auth.permission('buyer'),cartController.deleteMedicinefromCart);
 
 //route to handle an invalid endpoint 

@@ -5,6 +5,7 @@ const orderController = require('../controllers/orderController.js');
 
 router.post('/placeOrder', auth.authentication, auth.permission('buyer'), orderController.placeOrder);
 router.patch('/cancelOrder/:buyerId', auth.authentication, auth.permission('buyer'),orderController.cancelOrder)
+router.post('/verifyPayment', auth.authentication, auth.permission('buyer'), orderController.verifyPayment);
 
 //route to handle an invalid endpoint 
 router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
