@@ -766,9 +766,9 @@ The following workflow demonstrates how the frontend, backend, and Razorpay inte
 - If the signatures match, the backend updates `paymentStatus` to `"success"` and `orderStatus` to `"completed"`, and makes the order non-cancellable.
 - After successful payment verification, the buyer's cart is cleared.
 
-## The following screenshots demonstrate the Razorpay Checkout and successful payment flow implemented using a simple frontend for testing the payment integration.
+## Razorpay Checkout Screenshots
 
-### Razorpay Checkout Screenshots
+### The following screenshots demonstrate the Razorpay Checkout and successful payment flow implemented using a simple frontend for testing the payment integration.
 
 **Razorpay Checkout**
 
