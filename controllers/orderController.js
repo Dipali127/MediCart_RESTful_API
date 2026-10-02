@@ -4,7 +4,7 @@ const cartModel = require("../models/cartModel")
 const razorpayInstance = require("../razorpayConfig.js")
 const crypto = require("crypto")
 
-//Place an Order:
+// Place an Order:
 const placeOrder = async function (req, res) {
   try {
     const cartId = req.body.cartId;
@@ -27,7 +27,7 @@ const placeOrder = async function (req, res) {
       return res.status(403).send({ status: false, message: "Buyer is not authorized to place an order" })
     }
 
-    //Convert totalPrice to paise and ensure it's an integer
+    // Convert totalPrice to paise and ensure it's an integer
     const amountInPaise = Math.round(isuserCart.totalPrice * 100);
 
     if (amountInPaise < 100) {
@@ -43,7 +43,7 @@ const placeOrder = async function (req, res) {
 
     const createOrder = await orderModel.create(proceedOrder);
 
-    //Create a Razorpay order
+    // Create a Razorpay order
     const options = {
       amount: amountInPaise,
       currency: "INR"
@@ -58,7 +58,7 @@ const placeOrder = async function (req, res) {
       throw error;
     }
 
-    //Save Razorpay order ID in the database
+    // Save Razorpay order ID in the database
     const updatedOrder = await orderModel.findByIdAndUpdate(createOrder._id, {
       $set: { razorpayOrderId: razorpayOrder.id }
     }, { new: true }
@@ -71,7 +71,7 @@ const placeOrder = async function (req, res) {
   }
 };
 
-//Verify Payment
+// Verify Payment
 const verifyPayment = async function (req, res) {
   try {
     const { razorpayOrderId, razorpaySignature, paymentId } = req.body;
@@ -93,7 +93,7 @@ const verifyPayment = async function (req, res) {
       return res.status(403).send({ status: false, message: "Cannot verify payemnt for invalid buyer" })
     }
 
-    //Generate Signature
+    // Generate Signature
     const body = razorpayOrderId + "|" + paymentId;
 
     const expectedSignature = crypto
@@ -110,7 +110,7 @@ const verifyPayment = async function (req, res) {
       return res.status(400).send({ status: false, message: "cart not found" })
     }
 
-    //Clear the buyer's cart after successful payment verification
+    // Clear the buyer's cart after successful payment verification
     await cartModel.findByIdAndUpdate(
       isExistCart._id,
       {
@@ -140,7 +140,7 @@ const verifyPayment = async function (req, res) {
   }
 }
 
-//Cancel Order:
+// Cancel Order:
 const cancelOrder = async function (req, res) {
   try {
     const buyerId = req.params.buyerId;
@@ -148,12 +148,12 @@ const cancelOrder = async function (req, res) {
     if (!validation.checkObjectId(buyerId)) {
       return res.status(400).send({ status: false, message: "Invalid buyerId" });
     }
-    
+
     const { orderId } = req.body;
     if (!validation.checkObjectId(orderId)) {
       return res.status(400).send({ status: false, message: "Invalid orderId" });
     }
-    const checkOrder = await orderModel.findOne({ _id: orderId, buyerId: buyerId})
+    const checkOrder = await orderModel.findOne({ _id: orderId, buyerId: buyerId })
 
     if (!checkOrder) {
       return res.status(404).send({ status: false, message: "Order not found" });
@@ -171,7 +171,7 @@ const cancelOrder = async function (req, res) {
       return res.status(400).send({ status: false, message: "Order is completed, You cannot cancel the order" });
     }
 
-    //Check if the order is cancellable
+    // Check if the order is cancellable
     if (checkOrder.cancellable === true) {
       const updateOrder = await orderModel.findByIdAndUpdate(
         { _id: orderId },

@@ -3,7 +3,7 @@ const validation = require("../validator/validation")
 const jwt = require("jsonwebtoken")
 const bcrypt = require("bcrypt")
 
-//Register User:
+// Register User:
 const signUp = async function (req, res) {
   try {
     const data = req.body;
@@ -43,7 +43,7 @@ const signUp = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid password" })
     }
 
-    //Hash the password before saving it in database
+    // Hash the password before saving it in database
     const encryptPassword = await bcrypt.hash(password, 10)
 
     if (!validation.checkData(mobileNumber)) {
@@ -66,7 +66,7 @@ const signUp = async function (req, res) {
       return res.status(400).send({ status: false, message: "role must be either buyer or seller" })
     }
 
-    //Prepare the new user (buyer or seller) details with the encrypted password
+    // Prepare the new user (buyer or seller) details with the encrypted password
     const newDetails = {
       firstName,
       lastName,
@@ -78,7 +78,7 @@ const signUp = async function (req, res) {
 
     const createUser = await userModel.create(newDetails)
 
-    //Create a new javascript object from mongoose document to hide password
+    // Create a new javascript object from mongoose document to hide password
     const newResponse = createUser.toObject();
     delete newResponse.password;
 
@@ -89,7 +89,7 @@ const signUp = async function (req, res) {
   }
 }
 
-//Login User:
+// Login User:
 const signIn = async function (req, res) {
   try {
     const data = req.body;
@@ -108,7 +108,7 @@ const signIn = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid email" })
     }
 
-    //Check if the provided email doesn't exist in the database
+    // Check if the provided email doesn't exist in the database
     const isemailExist = await userModel.findOne({ email: email })
     if (!isemailExist) {
       return res.status(404).send({ status: false, message: "Email not found" })
@@ -122,13 +122,13 @@ const signIn = async function (req, res) {
       return res.status(400).send({ status: false, message: "Invalid password" })
     }
 
-    //Compare hashedPassword with the buyer or seller provided password
+    // Compare hashedPassword with the buyer or seller provided password
     const comparePassword = await bcrypt.compare(password, isemailExist.password)
     if (!comparePassword) {
       return res.status(401).send({ status: false, message: "Incorrect password" })
     }
 
-    //Generate token 
+    // Generate token 
     const token = jwt.sign(
       {
         userId: isemailExist._id.toString(),
@@ -139,7 +139,7 @@ const signIn = async function (req, res) {
     );
 
 
-    //Send the generated token in the response header
+    // Send the generated token in the response header
     res.set("Authorization", `Bearer ${token}`);
 
     return res.status(200).send({ status: true, message: "Login successfully", data: token })
@@ -148,7 +148,7 @@ const signIn = async function (req, res) {
   }
 };
 
-//Address of user(buyer):
+// Address of user(buyer):
 const addressofUser = async function (req, res) {
   try {
     const address = req.body;
@@ -171,10 +171,10 @@ const addressofUser = async function (req, res) {
       return res.status(400).send({ status: false, message: "City is required" })
     }
 
-    //Retrieve userId from decoded token
+    // Retrieve userId from decoded token
     const userId = req.decodedToken.userId;
 
-    //Update buyer's address in the database
+    // Update buyer's address in the database
     const addAddress = await userModel.findOneAndUpdate(
       { _id: userId },
       { $set: { address: address } },

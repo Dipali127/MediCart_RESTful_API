@@ -4,14 +4,14 @@ const moment = require("moment");
 const fs = require("fs");
 const uploadFileOnCloudinary = require("../imageUpload/cloudinary.js");
 
-//Helper function to delete locally stored file
+// Helper function to delete locally stored file
 function deleteLocalFile(filePath) {
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }
 }
 
-//Add Medicine:
+// Add Medicine:
 const addMedicine = async function (req, res) {
   try {
     const data = req.body;
@@ -19,7 +19,7 @@ const addMedicine = async function (req, res) {
       return res.status(400).send({ status: false, message: "Provide details to add medicine" })
     }
 
-    //multer uploaded file inside req.file property
+    // multer uploaded file inside req.file property
     if (!req.file) {
       return res.status(400).send({ status: false, message: "Image of medicine is required" });
     }
@@ -75,14 +75,14 @@ const addMedicine = async function (req, res) {
       return res.status(400).send({ status: false, message: "expiry date of medicine is required" })
     }
 
-    //Parsing expiry date of medicine using moment.js
+    // Parsing expiry date of medicine using moment.js
     let expiredDateofMedicine = moment(expiryDate, "YYYY-MM-DD", true);
 
     if (!expiredDateofMedicine.isValid()) {
       return res.status(400).send({ status: false, message: "Invalid date format" });
     }
 
-    //Get the current date
+    // Get the current date
     const currentDate = moment();
 
     if (!expiredDateofMedicine.isAfter(currentDate)) {
@@ -91,7 +91,7 @@ const addMedicine = async function (req, res) {
 
     const medicineImage = req.file.path;
 
-    //Upload to Cloudinary
+    // Upload to Cloudinary
     let attempts = 0, maxAttempt = 3;
     let cloudinaryResponse;
 
@@ -115,7 +115,7 @@ const addMedicine = async function (req, res) {
 
     deleteLocalFile(medicineImage);
 
-    //Prepare new medicine details
+    // Prepare new medicine details
     const addnewMedicine = {
       seller: sellerId,
       category: category,
@@ -133,7 +133,7 @@ const addMedicine = async function (req, res) {
     return res.status(201).send({ status: true, message: "Medicine Added Successfully", data: addmedicineinDb })
 
   } catch (error) {
-    //Delete locally stored file if an unexpected error occurs
+    // Delete locally stored file if an unexpected error occurs
     if (req.file?.path) {
       deleteLocalFile(req.file.path);
     }
@@ -141,13 +141,13 @@ const addMedicine = async function (req, res) {
   }
 };
 
-//Get Medicine:
+// Get Medicine:
 const getMedicine = async function (req, res) {
   try {
-    //Extract query parameters from the request
+    // Extract query parameters from the request
     let filter = req.query;
 
-    //Pagination:
+    // Pagination:
     let page = Number(filter.page);
     let limit = Number(filter.limit);
 
@@ -165,7 +165,7 @@ const getMedicine = async function (req, res) {
 
     let query = { isDeleted: false };
 
-    //Filter provided, fetch medicines based on filter parameters
+    // Filter provided, fetch medicines based on filter parameters
     const { medicineName, category } = filter;
     if (medicineName) {
       query.medicineName = medicineName;
@@ -188,7 +188,7 @@ const getMedicine = async function (req, res) {
   }
 };
 
-//Update Medicine:
+// Update Medicine:
 const updateMedicine = async function (req, res) {
   try {
     const medicineID = req.params.medicineId;
@@ -209,14 +209,14 @@ const updateMedicine = async function (req, res) {
 
     const sellerId = isexistMedicine.seller;
 
-    //Check authorization: Only the seller who created the medicine can update it
+    // Check authorization: Only the seller who created the medicine can update it
     if (req.decodedToken.userId !== sellerId.toString()) {
       return res.status(403).send({ status: false, message: "Unauthorized to update" })
     }
 
     let updatedField = {};
 
-    //Handle other fields to update
+    // Handle other fields to update
     const {
       category,
       medicineName,
@@ -253,14 +253,14 @@ const updateMedicine = async function (req, res) {
     }
 
     if (expiryDate) {
-      //Parse and validate the expiry date
+      // Parse and validate the expiry date
       const expiredDateofMedicine = moment(expiryDate, "YYYY-MM-DD", true);
 
       if (!expiredDateofMedicine.isValid()) {
         return res.status(400).send({ status: false, message: "Invalid date format" });
       }
 
-      //Get the current date
+      // Get the current date
       const currentDate = moment();
 
       if (!expiredDateofMedicine.isAfter(currentDate)) {
@@ -270,14 +270,14 @@ const updateMedicine = async function (req, res) {
       updatedField.expiryDate = expiredDateofMedicine;
     }
 
-    //Handle medicine image update
+    // Handle medicine image update
     if (req.file) {
-      //multer uploaded file inside req.file property
+      // multer uploaded file inside req.file property
       const medicineImage = req.file.path;
 
       let attempt = 0, maxAttempt = 3, cloudinaryResponse;
       while (attempt < maxAttempt) {
-        //Upload file in cloudinary
+        // Upload file in cloudinary
         cloudinaryResponse = await uploadFileOnCloudinary(medicineImage);
         if (cloudinaryResponse) {
           break;
@@ -290,10 +290,10 @@ const updateMedicine = async function (req, res) {
         return res.status(500).send({ status: false, message: "Failed to upload image to Cloudinary" });
       }
 
-      //After cloudinary successfully uploaded medicineImage to cloud storage, remove locally stored 
-      //medicine image.
+      // After cloudinary successfully uploaded medicineImage to cloud storage, remove locally stored 
+      // medicine image.
       deleteLocalFile(medicineImage);
-      //Store hosted URL of uploaded image file returned by cloudinary server to database.
+      // Store hosted URL of uploaded image file returned by cloudinary server to database.
       updatedField.medicineImage = cloudinaryResponse.url;
     }
 
@@ -302,7 +302,7 @@ const updateMedicine = async function (req, res) {
     return res.status(200).send({ status: true, message: "Updated Successfully", data: medicineUpdate })
 
   } catch (error) {
-    //Delete locally stored file if an unexpected error occurs
+    // Delete locally stored file if an unexpected error occurs
     if (req.file?.path) {
       deleteLocalFile(req.file.path);
     }
@@ -311,7 +311,7 @@ const updateMedicine = async function (req, res) {
   }
 };
 
-//Delete Medicine:
+// Delete Medicine:
 const deleteMedicine = async function (req, res) {
   try {
     const medicineID = req.params.medicineId;
@@ -329,7 +329,7 @@ const deleteMedicine = async function (req, res) {
     }
 
     const sellerId = isexistMedicine.seller;
-    //Check authorization: Only the seller who created the medicine can delete it
+    // Check authorization: Only the seller who created the medicine can delete it
     if (req.decodedToken.userId !== sellerId.toString()) {
       return res.status(403).send({ status: false, message: "Unauthorized to delete" })
     }

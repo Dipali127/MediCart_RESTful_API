@@ -579,7 +579,7 @@ Permission: buyer
 Content-Type: application/json
 ````
 **EXAMPLE**
-* **Request:** DELETE /cart/deleteMedicinefromCart/66bef613e805408836ca8286
+* **Request:** DELETE /cart/deleteMedicine/66bef613e805408836ca8286
 * **Response:**
 ```json
  {
