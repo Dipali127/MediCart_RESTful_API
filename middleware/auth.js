@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-//Authentication middleware:
+// Authentication middleware:
 const authentication = function (req, res, next) {
     try {
         const token = req.header('Authorization');
 
-        //Check if the token is provided in request header
+        // Check if the token is provided in request header
         if (!token) {
             return res.status(401).send({ status: false, message: "Provide token" });
         }
@@ -20,14 +20,14 @@ const authentication = function (req, res, next) {
             });
         }
 
-        //Verify the token
+        // Verify the token
         jwt.verify(newToken, process.env.SECRET_KEY, (error, decodedToken) => {
             if (error) {
                 return res.status(401).send({ status: false, message: "token is invalid or expired" })
             }
             
             req.decodedToken = decodedToken;
-            //Proceed to the next middleware or route handler
+            // Proceed to the next middleware or route handler
             next();
         })
 
@@ -36,9 +36,9 @@ const authentication = function (req, res, next) {
     }
 }
 
-//Permission middleware:
-//A wrapper function that takes a role as an argument and returns a middleware function
-//This allows us to check if the authenticated user has the required role
+// Permission middleware:
+// A wrapper function that takes a role as an argument and returns a middleware function
+// This allows us to check if the authenticated user has the required role
 const permission = function (role) {
     return (req, res, next) => {
         if (req.decodedToken.role !== role) {

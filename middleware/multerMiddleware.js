@@ -9,19 +9,19 @@ if (!fs.existsSync(uploadDir)) {
 }
 
 
-//Configure Multer disk storage for uploading an images
+// Configure Multer disk storage for uploading an images
 const storage = multer.diskStorage({
      destination: function (req, file, cb) {
-        return cb(null, uploadDir) //null is custom error added by developer
+        return cb(null, uploadDir) // null is custom error added by developer
     },
     filename: function (req, file, cb) {
-        cb(null, `${Date.now()}-${file.originalname}`); //Use a timestamp to avoid file name conflicts
+        cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid file name conflicts
     }
 
 })
 
 
-//Configure Multer to accept only image files (JPEG, JPG, PNG)
+// Configure Multer to accept only image files (JPEG, JPG, PNG)
 const upload = multer({
     storage: storage,
     fileFilter: function (req, file, cb) {
@@ -36,5 +36,5 @@ const upload = multer({
     }
 });
 
-//Export Multer middleware to handle single image file with the field name "medicineImage"
+// Export Multer middleware to handle single image file with the field name "medicineImage"
 module.exports = upload.single("medicineImage")
