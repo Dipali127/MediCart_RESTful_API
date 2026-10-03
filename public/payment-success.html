@@ -87,8 +87,8 @@
                 // Step 3: Razorpay returns payment details
                 handler: function (response) {
                     console.log("Razorpay Response:", response);
-                    // Step 4: Send payment details to backend
-                    // for signature verification
+                    //Step 4: Send payment details to backend
+                    //for signature verification
                     fetch('http://localhost:3002/order/verifyPayment', {
                         method: 'POST',
                         headers: {
