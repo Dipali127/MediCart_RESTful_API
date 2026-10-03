@@ -8,7 +8,7 @@ router.get('/viewCart/:buyerId', auth.authentication, auth.permission('buyer'),c
 router.patch('/decreaseCartQuantity/:buyerId', auth.authentication, auth.permission('buyer'),cartController.decreaseCartQuantity)
 router.delete('/deleteMedicine/:buyerId', auth.authentication, auth.permission('buyer'),cartController.deleteMedicinefromCart);
 
-//route to handle an invalid endpoint 
+// route to handle an invalid endpoint 
 router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
 
 module.exports = router;

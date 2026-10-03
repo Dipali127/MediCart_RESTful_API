@@ -7,7 +7,7 @@ router.post('/placeOrder', auth.authentication, auth.permission('buyer'), orderC
 router.patch('/cancelOrder/:buyerId', auth.authentication, auth.permission('buyer'),orderController.cancelOrder)
 router.post('/verifyPayment', auth.authentication, auth.permission('buyer'), orderController.verifyPayment);
 
-//route to handle an invalid endpoint 
+// route to handle an invalid endpoint 
 router.all("/*",(req,res)=>{res.status(404).send({status:false,message:"Endpoint is not correct"})})
 
 module.exports = router;
